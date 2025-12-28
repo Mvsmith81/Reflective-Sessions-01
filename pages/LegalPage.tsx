@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Shield, FileText, CheckCircle } from 'lucide-react';
 import { DataService } from '../services/dataService';
+import { SiteContent } from '../types';
+import { INITIAL_CONTENT } from '../constants';
 
 export const LegalPage: React.FC = () => {
-  const content = DataService.getContent();
+  const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
+
+  useEffect(() => {
+    DataService.getContent().then(setContent);
+  }, []);
 
   // Scroll to section on click
   const scrollTo = (id: string) => {

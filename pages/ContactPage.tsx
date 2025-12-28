@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { DataService } from '../services/dataService';
+import { SiteContent } from '../types';
+import { INITIAL_CONTENT } from '../constants';
 
 export const ContactPage: React.FC = () => {
-  const content = DataService.getContent();
+  const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
+
+  useEffect(() => {
+    DataService.getContent().then(setContent);
+  }, []);
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20">

@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Shield, Menu, X, Anchor, Phone, Mail, Globe } from 'lucide-react';
 import { DataService } from '../services/dataService';
+import { SiteContent } from '../types';
+import { INITIAL_CONTENT } from '../constants';
 
 export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const content = DataService.getContent();
+  const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    DataService.getContent().then(setContent);
+  }, []);
 
   // Branding:
   // Gradient: from-[#4DA3FF] to-[#A855F7]

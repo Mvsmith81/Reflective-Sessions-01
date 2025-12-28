@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Anchor, Lock, ArrowRight, ShieldCheck, User } from 'lucide-react';
 import { DataService } from '../services/dataService';
+import { SiteContent } from '../types';
+import { INITIAL_CONTENT } from '../constants';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,7 +11,11 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const content = DataService.getContent();
+  const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
+
+  useEffect(() => {
+    DataService.getContent().then(setContent);
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

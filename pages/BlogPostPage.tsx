@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { DataService } from '../services/dataService';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
+import { BlogPost } from '../types';
 
 export const BlogPostPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
-  const post = DataService.getBlogPostById(postId || '');
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (postId) {
+      DataService.getBlogPostById(postId).then(data => {
+        setPost(data);
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  }, [postId]);
+
+  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>;
 
   if (!post) {
     return <Navigate to="/blog" replace />;

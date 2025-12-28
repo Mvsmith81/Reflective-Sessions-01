@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DataService } from '../services/dataService';
-import { GroupOffering } from '../types';
+import { GroupOffering, SiteContent } from '../types';
+import { INITIAL_CONTENT } from '../constants';
 import { ArrowRight, Users, BookOpen, HeartHandshake, Shield, Info, Sparkles, Video } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -47,9 +48,14 @@ const GroupCard: React.FC<{ group: GroupOffering }> = ({ group }) => (
 );
 
 export const LandingPage: React.FC = () => {
-  const content = DataService.getContent();
-  const groups = DataService.getGroups();
+  const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
+  const [groups, setGroups] = useState<GroupOffering[]>([]);
   const location = useLocation();
+
+  useEffect(() => {
+    DataService.getContent().then(setContent);
+    DataService.getGroups().then(setGroups);
+  }, []);
 
   useEffect(() => {
     // Handle scroll from other pages via state

@@ -12,6 +12,7 @@ import { GroupDetailsPage } from './pages/GroupDetailsPage';
 import { BlogPage } from './pages/BlogPage';
 import { BlogPostPage } from './pages/BlogPostPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import ScrollToTop from './components/ScrollToTop';
 
 // Wrapper for public pages to ensure layout is applied
 const PublicRoutes = () => (
@@ -23,6 +24,7 @@ const PublicRoutes = () => (
 const App: React.FC = () => {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route element={<PublicRoutes />}>

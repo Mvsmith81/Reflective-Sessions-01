@@ -1,11 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DataService } from '../services/dataService';
 import { Calendar, Clock, Video, ArrowRight, Hourglass } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SiteContent, GroupOffering } from '../types';
+import { INITIAL_CONTENT } from '../constants';
 
 export const SchedulePage: React.FC = () => {
-  const content = DataService.getContent();
-  const groups = DataService.getGroups().filter(g => g.active);
+  const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
+  const [groups, setGroups] = useState<GroupOffering[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      DataService.getContent(),
+      DataService.getGroups()
+    ]).then(([c, g]) => {
+      setContent(c);
+      setGroups(g);
+      setLoading(false);
+    });
+  }, []);
+
+  const activeGroups = groups.filter(g => g.active);
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400">Loading Schedule...</div>;
+  }
 
   // Condition 1: Global Status Message exists (e.g. "Coming March 2026")
   if (content.globalScheduleStatus && content.globalScheduleStatus.trim().length > 0) {
@@ -55,7 +75,7 @@ export const SchedulePage: React.FC = () => {
         </div>
 
         <div className="grid gap-6">
-          {groups.map((group) => (
+          {activeGroups.map((group) => (
             <div key={group.id} className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 hover:border-[#4DA3FF] transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -94,7 +114,7 @@ export const SchedulePage: React.FC = () => {
           ))}
         </div>
 
-        {groups.length === 0 && (
+        {activeGroups.length === 0 && (
           <div className="text-center py-20 text-slate-400">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No active groups currently scheduled.</p>

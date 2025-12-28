@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { DataService } from '../services/dataService';
 import { Link } from 'react-router-dom';
 import { Calendar, User, ArrowRight } from 'lucide-react';
+import { BlogPost } from '../types';
 
 export const BlogPage: React.FC = () => {
-  const posts = DataService.getBlogPosts();
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    DataService.getBlogPosts().then(data => {
+      setPosts(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading Articles...</div>;
+  }
 
   return (
     <div className="bg-slate-50 min-h-screen pb-24">

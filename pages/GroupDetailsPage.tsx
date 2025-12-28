@@ -1,11 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { DataService } from '../services/dataService';
 import { ArrowLeft, Calendar, User, CheckCircle, Video, ArrowRight, Shield } from 'lucide-react';
+import { GroupOffering } from '../types';
 
 export const GroupDetailsPage: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
-  const group = DataService.getGroupById(groupId || '');
+  const [group, setGroup] = useState<GroupOffering | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (groupId) {
+      DataService.getGroupById(groupId).then((g) => {
+        setGroup(g);
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  }, [groupId]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400">Loading Group Details...</div>;
+  }
 
   if (!group) {
     return <Navigate to="/" replace />;

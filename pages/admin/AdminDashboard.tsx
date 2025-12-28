@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DataService } from '../../services/dataService';
 import { GroupOffering, SiteContent, GroupType, BlogPost } from '../../types';
 import { 
@@ -34,10 +34,11 @@ const ModernTextArea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>
   />
 );
 
-const PrimaryButton: React.FC<{ onClick: () => void; children: React.ReactNode; icon?: React.ReactNode }> = ({ onClick, children, icon }) => (
+const PrimaryButton: React.FC<{ onClick: () => void; children: React.ReactNode; icon?: React.ReactNode; disabled?: boolean }> = ({ onClick, children, icon, disabled }) => (
   <button 
     onClick={onClick}
-    className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all shadow-lg shadow-slate-200"
+    disabled={disabled}
+    className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
   >
     {icon} {children}
   </button>
@@ -70,9 +71,22 @@ const StatsCard: React.FC<{ title: string; value: string | number; icon: React.R
 // -- Editors --
 
 const GroupEditor: React.FC = () => {
-  const [groups, setGroups] = useState<GroupOffering[]>(DataService.getGroups());
+  const [groups, setGroups] = useState<GroupOffering[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<GroupOffering>>({});
+  const [saving, setSaving] = useState(false);
+
+  const fetchGroups = async () => {
+    setLoading(true);
+    const data = await DataService.getGroups();
+    setGroups(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   const startEdit = (group?: GroupOffering) => {
     if (group) {
@@ -81,7 +95,7 @@ const GroupEditor: React.FC = () => {
     } else {
       setEditingId('new');
       setForm({
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         title: '',
         description: '',
         active: true,
@@ -94,23 +108,28 @@ const GroupEditor: React.FC = () => {
     }
   };
 
-  const saveGroup = () => {
-    let newGroups = [...groups];
-    if (editingId === 'new') {
-      newGroups.push(form as GroupOffering);
-    } else {
-      newGroups = newGroups.map(g => g.id === editingId ? { ...g, ...form } as GroupOffering : g);
+  const saveGroup = async () => {
+    if (!form.id || !form.title) return;
+    setSaving(true);
+    try {
+      await DataService.upsertGroup(form as GroupOffering);
+      await fetchGroups();
+      setEditingId(null);
+    } catch (e: any) {
+      alert("Failed to save group. Error: " + (e.message || e));
+    } finally {
+      setSaving(false);
     }
-    setGroups(newGroups);
-    DataService.saveGroups(newGroups);
-    setEditingId(null);
   };
 
-  const deleteGroup = (id: string) => {
+  const deleteGroup = async (id: string) => {
     if (confirm('Are you sure? This cannot be undone.')) {
-      const newGroups = groups.filter(g => g.id !== id);
-      setGroups(newGroups);
-      DataService.saveGroups(newGroups);
+      try {
+        await DataService.deleteGroup(id);
+        await fetchGroups();
+      } catch (e: any) {
+        alert("Failed to delete group. Error: " + (e.message || e));
+      }
     }
   };
 
@@ -198,13 +217,17 @@ const GroupEditor: React.FC = () => {
              </div>
              
              <div className="flex flex-col gap-3">
-               <PrimaryButton onClick={saveGroup} icon={<Save className="h-4 w-4" />}>Save Changes</PrimaryButton>
+               <PrimaryButton onClick={saveGroup} disabled={saving} icon={<Save className="h-4 w-4" />}>
+                 {saving ? 'Saving...' : 'Save Changes'}
+               </PrimaryButton>
              </div>
           </div>
         </div>
       </div>
     );
   }
+
+  if (loading) return <div className="p-10 text-center text-slate-500">Loading Groups...</div>;
 
   return (
     <div className="space-y-6">
@@ -252,9 +275,22 @@ const GroupEditor: React.FC = () => {
 };
 
 const BlogEditor: React.FC = () => {
-  const [posts, setPosts] = useState<BlogPost[]>(DataService.getBlogPosts());
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<BlogPost>>({});
+  const [saving, setSaving] = useState(false);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    const data = await DataService.getBlogPosts();
+    setPosts(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   const startEdit = (post?: BlogPost) => {
     if (post) {
@@ -263,7 +299,7 @@ const BlogEditor: React.FC = () => {
     } else {
       setEditingId('new');
       setForm({
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         title: '',
         author: '',
         publishDate: new Date().toISOString().split('T')[0],
@@ -275,23 +311,28 @@ const BlogEditor: React.FC = () => {
     }
   };
 
-  const savePost = () => {
-    let newPosts = [...posts];
-    if (editingId === 'new') {
-      newPosts.push(form as BlogPost);
-    } else {
-      newPosts = newPosts.map(p => p.id === editingId ? { ...p, ...form } as BlogPost : p);
+  const savePost = async () => {
+    if (!form.id || !form.title) return;
+    setSaving(true);
+    try {
+      await DataService.upsertPost(form as BlogPost);
+      await fetchPosts();
+      setEditingId(null);
+    } catch (e: any) {
+      alert("Failed to save post: " + (e.message || e));
+    } finally {
+      setSaving(false);
     }
-    setPosts(newPosts);
-    DataService.saveBlogPosts(newPosts);
-    setEditingId(null);
   };
 
-  const deletePost = (id: string) => {
+  const deletePost = async (id: string) => {
     if (confirm('Delete this post?')) {
-      const newPosts = posts.filter(p => p.id !== id);
-      setPosts(newPosts);
-      DataService.saveBlogPosts(newPosts);
+      try {
+        await DataService.deletePost(id);
+        await fetchPosts();
+      } catch (e: any) {
+         alert("Failed to delete post: " + (e.message || e));
+      }
     }
   };
 
@@ -343,12 +384,16 @@ const BlogEditor: React.FC = () => {
 
           <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
              <SecondaryButton onClick={() => setEditingId(null)}>Discard</SecondaryButton>
-             <PrimaryButton onClick={savePost} icon={<Save className="h-4 w-4" />}>Publish Article</PrimaryButton>
+             <PrimaryButton onClick={savePost} disabled={saving} icon={<Save className="h-4 w-4" />}>
+               {saving ? 'Saving...' : 'Publish Article'}
+             </PrimaryButton>
           </div>
         </div>
       </div>
     );
   }
+
+  if (loading) return <div className="p-10 text-center text-slate-500">Loading Posts...</div>;
 
   return (
     <div className="space-y-6">
@@ -361,6 +406,7 @@ const BlogEditor: React.FC = () => {
       </div>
       
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+         {posts.length === 0 && <div className="p-6 text-center text-slate-400">No posts found. Create one!</div>}
          {posts.map((post, idx) => (
            <div key={post.id} className={`p-5 flex items-center justify-between hover:bg-slate-50 transition-colors ${idx !== posts.length -1 ? 'border-b border-slate-50' : ''}`}>
               <div className="flex items-center gap-4">
@@ -388,12 +434,32 @@ const BlogEditor: React.FC = () => {
 };
 
 const ContentCMS: React.FC = () => {
-  const [content, setContent] = useState<SiteContent>(DataService.getContent());
+  const [content, setContent] = useState<SiteContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    DataService.saveContent(content);
-    alert('Site content updated!');
+  useEffect(() => {
+    DataService.getContent().then(c => {
+      setContent(c);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleSave = async () => {
+    if (content) {
+      setSaving(true);
+      try {
+        await DataService.saveContent(content);
+        alert('Site content updated!');
+      } catch (e: any) {
+        alert("Failed to save content: " + (e.message || e));
+      } finally {
+        setSaving(false);
+      }
+    }
   };
+
+  if (loading || !content) return <div className="p-10 text-center text-slate-500">Loading Content...</div>;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -402,7 +468,9 @@ const ContentCMS: React.FC = () => {
            <h3 className="text-lg font-bold text-slate-900">Content Management</h3>
            <p className="text-slate-500 text-sm">Update global site settings and text.</p>
         </div>
-        <PrimaryButton onClick={handleSave} icon={<Save className="h-4 w-4" />}>Save Changes</PrimaryButton>
+        <PrimaryButton onClick={handleSave} disabled={saving} icon={<Save className="h-4 w-4" />}>
+           {saving ? 'Saving...' : 'Save Changes'}
+        </PrimaryButton>
       </div>
 
       <div className="space-y-8">
@@ -471,11 +539,18 @@ const ContentCMS: React.FC = () => {
 
 export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'groups' | 'blog' | 'cms'>('dashboard');
-  const stats = {
-    groups: DataService.getGroups().filter(g => g.active).length,
-    posts: DataService.getBlogPosts().length
-  };
+  const [stats, setStats] = useState({ groups: 0, posts: 0 });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Basic stats fetch
+    Promise.all([DataService.getGroups(), DataService.getBlogPosts()]).then(([g, p]) => {
+      setStats({
+        groups: g.filter(i => i.active).length,
+        posts: p.length
+      });
+    });
+  }, []);
 
   const SidebarItem: React.FC<{ 
     id: string; 
@@ -576,12 +651,6 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-slate-500 mt-1">Overview of your platform's performance.</p>
           </div>
           <div className="flex gap-4">
-             <button 
-              onClick={DataService.resetData}
-              className="px-4 py-2 bg-white border border-red-100 text-red-500 hover:bg-red-50 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
-            >
-              Reset Demo Data
-            </button>
             <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-500 font-bold">
                AS
             </div>
@@ -592,9 +661,9 @@ export const AdminDashboard: React.FC = () => {
           {activeTab === 'dashboard' && (
             <div className="space-y-8">
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard title="Active Groups" value={stats.groups} icon={<Users className="h-6 w-6" />} trend="2 New" />
-                <StatsCard title="Published Posts" value={stats.posts} icon={<BookOpen className="h-6 w-6" />} trend="Current" />
-                <StatsCard title="Total Views" value="2.4k" icon={<BarChart3 className="h-6 w-6" />} trend="12%" />
+                <StatsCard title="Active Groups" value={stats.groups} icon={<Users className="h-6 w-6" />} trend="Current" />
+                <StatsCard title="Published Posts" value={stats.posts} icon={<BookOpen className="h-6 w-6" />} trend="Total" />
+                <StatsCard title="Total Views" value="--" icon={<BarChart3 className="h-6 w-6" />} trend="--" />
               </div>
               
               <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-3xl text-white shadow-xl shadow-slate-300/50 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
