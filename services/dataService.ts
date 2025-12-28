@@ -12,7 +12,7 @@ export const DataService = {
         .single();
 
       if (error) {
-        // If table is empty or error, use fallback without throwing
+        // If table is empty or error, use fallback without throwing (Resilience for public view)
         console.warn('Supabase content fetch failed, using fallback:', error.message);
         return INITIAL_CONTENT;
       }
@@ -36,6 +36,7 @@ export const DataService = {
     }
   },
 
+  // ADMIN WRITE ACTION: Must propagate errors for UI handling
   saveContent: async (content: SiteContent): Promise<void> => {
     const dbPayload = {
       id: 1, // Singleton row
@@ -56,14 +57,13 @@ export const DataService = {
 
     if (error) {
       console.error('Error saving content:', error.message);
-      throw error;
+      throw error; // Propagate to UI (AdminDashboard)
     }
   },
 
   // -- GROUPS --
   getGroups: async (): Promise<GroupOffering[]> => {
     try {
-      // NOTE: Changed table name to 'group_offerings' to avoid Postgres reserved keyword 'groups'
       const { data, error } = await supabase
         .from('group_offerings')
         .select('*');
@@ -105,7 +105,6 @@ export const DataService = {
         .single();
 
       if (error || !data) {
-        // Fallback to local search if DB fetch fails
         return INITIAL_GROUPS.find(g => g.id === id) || null;
       }
 
@@ -127,6 +126,7 @@ export const DataService = {
     }
   },
 
+  // ADMIN WRITE ACTION: Must propagate errors for UI handling
   upsertGroup: async (group: GroupOffering): Promise<void> => {
     const dbPayload = {
       id: group.id,
@@ -148,17 +148,21 @@ export const DataService = {
 
     if (error) {
       console.error("Error saving group:", error.message);
-      throw error;
+      throw error; // Propagate to UI
     }
   },
 
+  // ADMIN WRITE ACTION: Must propagate errors for UI handling
   deleteGroup: async (id: string): Promise<void> => {
     const { error } = await supabase
       .from('group_offerings')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error deleting group:", error.message);
+      throw error; // Propagate to UI
+    }
   },
 
   // -- BLOG POSTS --
@@ -219,6 +223,7 @@ export const DataService = {
     }
   },
 
+  // ADMIN WRITE ACTION: Must propagate errors for UI handling
   upsertPost: async (post: BlogPost): Promise<void> => {
     const dbPayload = {
       id: post.id,
@@ -237,17 +242,21 @@ export const DataService = {
 
     if (error) {
        console.error("Error saving post:", error.message);
-       throw error;
+       throw error; // Propagate to UI
     }
   },
 
+  // ADMIN WRITE ACTION: Must propagate errors for UI handling
   deletePost: async (id: string): Promise<void> => {
     const { error } = await supabase
       .from('posts')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error deleting post:", error.message);
+      throw error; // Propagate to UI
+    }
   },
 
   resetData: () => {

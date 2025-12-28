@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DataService } from '../../services/dataService';
+import { supabase } from '../../services/supabaseClient';
 import { GroupOffering, SiteContent, GroupType, BlogPost } from '../../types';
 import { 
   LayoutDashboard, Users, FileText, Plus, Trash2, Edit2, Save, 
@@ -540,9 +541,27 @@ const ContentCMS: React.FC = () => {
 export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'groups' | 'blog' | 'cms'>('dashboard');
   const [stats, setStats] = useState({ groups: 0, posts: 0 });
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check Authentication
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate('/admin/login');
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate('/admin/login');
+      } else {
+        setUser(session.user);
+      }
+    });
+
     // Basic stats fetch
     Promise.all([DataService.getGroups(), DataService.getBlogPosts()]).then(([g, p]) => {
       setStats({
@@ -550,7 +569,14 @@ export const AdminDashboard: React.FC = () => {
         posts: p.length
       });
     });
-  }, []);
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/admin/login');
+  };
 
   const SidebarItem: React.FC<{ 
     id: string; 
@@ -571,6 +597,13 @@ export const AdminDashboard: React.FC = () => {
       {label}
       {active && <ChevronRight className="ml-auto h-4 w-4 text-slate-300" />}
     </button>
+  );
+
+  if (!user) return (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+      <div className="w-8 h-8 border-4 border-[#4DA3FF] border-t-transparent rounded-full animate-spin"></div>
+      <div className="text-slate-500 font-medium">Authenticating Admin...</div>
+    </div>
   );
 
   return (
@@ -635,8 +668,8 @@ export const AdminDashboard: React.FC = () => {
         </nav>
 
         <div className="p-6 border-t border-slate-200/60">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">
-            <LogOut className="h-4 w-4" /> Exit to Website
+          <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-slate-500 hover:text-red-600 transition-colors font-medium">
+            <LogOut className="h-4 w-4" /> Sign Out
           </button>
         </div>
       </aside>
@@ -650,9 +683,13 @@ export const AdminDashboard: React.FC = () => {
             </h1>
             <p className="text-slate-500 mt-1">Overview of your platform's performance.</p>
           </div>
-          <div className="flex gap-4">
-            <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-500 font-bold">
-               AS
+          <div className="flex items-center gap-4">
+             <div className="hidden md:block text-right">
+                <div className="text-sm font-bold text-slate-900">Admin User</div>
+                <div className="text-xs text-slate-500">{user?.email}</div>
+             </div>
+            <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-500 font-bold overflow-hidden">
+               {user?.email ? user.email[0].toUpperCase() : 'A'}
             </div>
           </div>
         </header>

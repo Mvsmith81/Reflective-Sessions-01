@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { PublicLayout } from './components/Layout';
 import { LandingPage } from './pages/LandingPage';
 import { ContactPage } from './pages/ContactPage';
-import { LoginPage } from './pages/LoginPage';
+import { AdminLogin } from './pages/admin/AdminLogin';
 import { LegalPage } from './pages/LegalPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { HowItWorksPage } from './pages/HowItWorksPage';
@@ -12,6 +12,7 @@ import { GroupDetailsPage } from './pages/GroupDetailsPage';
 import { BlogPage } from './pages/BlogPage';
 import { BlogPostPage } from './pages/BlogPostPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { RequireAdmin } from './components/admin/RequireAdmin';
 import ScrollToTop from './components/ScrollToTop';
 
 // Wrapper for public pages to ensure layout is applied
@@ -39,11 +40,15 @@ const App: React.FC = () => {
           <Route path="/legal" element={<LegalPage />} />
         </Route>
 
-        {/* Auth Route */}
-        <Route path="/login" element={<LoginPage />} />
+        {/* Auth Route - Explicitly Public */}
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* Admin Routes - In a real app, this would be protected by Auth */}
-        <Route path="/admin" element={<AdminDashboard />} />
+        {/* Protected Admin Routes - Uses wildcard to protect /admin and any subroutes */}
+        <Route path="/admin/*" element={
+          <RequireAdmin>
+            <AdminDashboard />
+          </RequireAdmin>
+        } />
       </Routes>
     </Router>
   );

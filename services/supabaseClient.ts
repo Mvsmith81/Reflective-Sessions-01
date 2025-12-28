@@ -26,6 +26,12 @@ if (!supabaseUrl || !supabaseKey) {
 
   client = {
     from: () => mockBuilder,
+    auth: {
+      getSession: async () => ({ data: { session: null }, error: null }),
+      signInWithPassword: async () => ({ data: { session: null }, error: { message: 'Auth not configured (Fallback Mode)' } }),
+      signOut: async () => ({ error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+    }
   } as any;
 
 } else {

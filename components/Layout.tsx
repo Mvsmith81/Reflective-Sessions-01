@@ -66,7 +66,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
             {/* Desktop Menu */}
             <div className="hidden md:flex space-x-8 items-center">
-              <Link to="/" className={isActive("/")}>Home</Link>
+              <Link to="/" className="text-slate-600 hover:text-[#4DA3FF] transition-colors cursor-pointer">Home</Link>
               <Link to="/how-it-works" className={isActive("/how-it-works")}>How It Works</Link>
               <button onClick={() => handleNav('offerings')} className="text-slate-600 hover:text-[#4DA3FF] transition-colors font-medium">Groups</button>
               <Link to="/blog" className={isActive("/blog")}>Blog</Link>
@@ -97,7 +97,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
             <button className="block w-full text-left py-2 text-slate-600" onClick={() => handleNav('offerings')}>Group Offerings</button>
             <Link to="/blog" className="block py-2 text-slate-600" onClick={() => setIsMenuOpen(false)}>Blog</Link>
             <Link to="/contact" className="block py-2 text-slate-600" onClick={() => setIsMenuOpen(false)}>Contact</Link>
-            <Link to="/login" className="block py-2 text-[#4DA3FF] text-sm mt-4 border-t border-slate-100 pt-4" onClick={() => setIsMenuOpen(false)}>Staff Portal</Link>
+            <Link to="/admin/login" className="block py-2 text-[#4DA3FF] text-sm mt-4 border-t border-slate-100 pt-4" onClick={() => setIsMenuOpen(false)}>Staff Portal</Link>
           </div>
         )}
       </nav>
@@ -159,7 +159,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
                 <li><Link to="/legal" className="hover:text-[#4DA3FF]">Privacy Policy</Link></li>
                 <li><Link to="/legal" className="hover:text-[#4DA3FF]">Terms of Service</Link></li>
                 <li className="pt-4">
-                  <Link to="/login" className="text-slate-400 hover:text-slate-600 text-xs transition-colors">Staff Login</Link>
+                  <Link to="/admin/login" className="text-slate-400 hover:text-slate-600 text-xs transition-colors">Staff Login</Link>
                 </li>
               </ul>
             </div>
