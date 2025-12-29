@@ -99,6 +99,8 @@ const GroupEditor: React.FC = () => {
         id: crypto.randomUUID(),
         title: '',
         description: '',
+        longDescription: '',
+        benefits: [],
         active: true,
         type: GroupType.SUPPORT,
         image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80',
@@ -117,7 +119,7 @@ const GroupEditor: React.FC = () => {
       await fetchGroups();
       setEditingId(null);
     } catch (e: any) {
-      alert("Failed to save group. Error: " + (e.message || e));
+      alert(e.message || "Failed to save group.");
     } finally {
       setSaving(false);
     }
@@ -129,7 +131,7 @@ const GroupEditor: React.FC = () => {
         await DataService.deleteGroup(id);
         await fetchGroups();
       } catch (e: any) {
-        alert("Failed to delete group. Error: " + (e.message || e));
+        alert(e.message || "Failed to delete group.");
       }
     }
   };
@@ -197,6 +199,15 @@ const GroupEditor: React.FC = () => {
                 value={form.longDescription || form.description} 
                 onChange={e => setForm({...form, longDescription: e.target.value})} 
                 rows={6}
+              />
+            </InputGroup>
+            
+            <InputGroup label="Key Takeaways (Benefits)" subLabel="Enter one benefit per line">
+              <ModernTextArea 
+                value={form.benefits?.join('\n') || ''} 
+                onChange={e => setForm({...form, benefits: e.target.value.split('\n')})}
+                placeholder="Understand the psychology...&#10;Develop a plan...&#10;Process grief..."
+                rows={4}
               />
             </InputGroup>
           </div>
@@ -302,12 +313,12 @@ const BlogEditor: React.FC = () => {
       setForm({
         id: crypto.randomUUID(),
         title: '',
-        author: '',
-        publishDate: new Date().toISOString().split('T')[0],
-        imageUrl: 'https://images.unsplash.com/photo-1499750310159-52f8f4347504?auto=format&fit=crop&q=80',
-        excerpt: '',
+        author: 'Reflective Sessions Team', // View model only (not saved)
+        publishDate: new Date().toLocaleDateString(), // View model only
+        imageUrl: 'https://images.unsplash.com/photo-1499750310159-52f8f4347504?auto=format&fit=crop&q=80', // View model only
+        excerpt: '', // View model only
         content: '',
-        tags: []
+        tags: [] // View model only
       });
     }
   };
@@ -320,7 +331,7 @@ const BlogEditor: React.FC = () => {
       await fetchPosts();
       setEditingId(null);
     } catch (e: any) {
-      alert("Failed to save post: " + (e.message || e));
+      alert(e.message || "Failed to save post.");
     } finally {
       setSaving(false);
     }
@@ -332,14 +343,9 @@ const BlogEditor: React.FC = () => {
         await DataService.deletePost(id);
         await fetchPosts();
       } catch (e: any) {
-         alert("Failed to delete post: " + (e.message || e));
+         alert(e.message || "Failed to delete post.");
       }
     }
-  };
-
-  const handleTagsChange = (val: string) => {
-    const tags = val.split(',').map(t => t.trim());
-    setForm({ ...form, tags });
   };
 
   if (editingId) {
@@ -358,30 +364,14 @@ const BlogEditor: React.FC = () => {
              <ModernInput value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="text-lg font-semibold" placeholder="Enter a catchy title..." />
           </InputGroup>
 
-          <div className="grid grid-cols-2 gap-6">
-             <InputGroup label="Author Name">
-                <ModernInput value={form.author} onChange={e => setForm({...form, author: e.target.value})} />
-             </InputGroup>
-             <InputGroup label="Publish Date">
-                <ModernInput type="date" value={form.publishDate} onChange={e => setForm({...form, publishDate: e.target.value})} />
-             </InputGroup>
-          </div>
-
-          <InputGroup label="Hero Image URL">
-             <ModernInput value={form.imageUrl} onChange={e => setForm({...form, imageUrl: e.target.value})} />
-          </InputGroup>
-
-          <InputGroup label="Excerpt" subLabel="A short summary displayed on the blog listing page.">
-             <ModernTextArea value={form.excerpt} onChange={e => setForm({...form, excerpt: e.target.value})} style={{ minHeight: '80px'}} />
-          </InputGroup>
-
           <InputGroup label="Content" subLabel="Main article body. Supports basic line breaks.">
              <ModernTextArea value={form.content} onChange={e => setForm({...form, content: e.target.value})} style={{ minHeight: '400px', fontFamily: 'monospace'}} />
           </InputGroup>
 
-          <InputGroup label="Tags">
-             <ModernInput value={form.tags?.join(', ')} onChange={e => handleTagsChange(e.target.value)} placeholder="Community, Healing, Growth" />
-          </InputGroup>
+          {/* Note: Removed inputs for Author, Date, Image, Excerpt, Tags as they are not supported by the current database schema. */}
+          <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-400">
+             Note: Author, Image, and Date are managed automatically or using defaults to ensure database compatibility.
+          </div>
 
           <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
              <SecondaryButton onClick={() => setEditingId(null)}>Discard</SecondaryButton>
@@ -453,7 +443,7 @@ const ContentCMS: React.FC = () => {
         await DataService.saveContent(content);
         alert('Site content updated!');
       } catch (e: any) {
-        alert("Failed to save content: " + (e.message || e));
+        alert(e.message || "Failed to save content.");
       } finally {
         setSaving(false);
       }
@@ -545,20 +535,20 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check Authentication
+    // Only fetch user for display, RequireAdmin handles the guard
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate('/admin/login');
-      } else {
+      if (session) {
         setUser(session.user);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate('/admin/login');
-      } else {
+      if (session) {
         setUser(session.user);
+      } else {
+        // If session is lost (logged out), AdminDashboard should probably exit, 
+        // though RequireAdmin will eventually catch it.
+        navigate('/admin/login', { replace: true });
       }
     });
 
@@ -575,7 +565,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/admin/login');
+    navigate('/admin/login', { replace: true });
   };
 
   const SidebarItem: React.FC<{ 
@@ -602,7 +592,7 @@ export const AdminDashboard: React.FC = () => {
   if (!user) return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
       <div className="w-8 h-8 border-4 border-[#4DA3FF] border-t-transparent rounded-full animate-spin"></div>
-      <div className="text-slate-500 font-medium">Authenticating Admin...</div>
+      <div className="text-slate-500 font-medium">Loading Dashboard...</div>
     </div>
   );
 

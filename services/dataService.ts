@@ -40,24 +40,25 @@ export const DataService = {
   saveContent: async (content: SiteContent): Promise<void> => {
     const dbPayload = {
       id: 1, // Singleton row
-      hero_title: content.heroTitle,
-      hero_subtitle: content.heroSubtitle,
-      about_text: content.aboutText,
-      methodology_text: content.methodologyText,
-      contact_email: content.contactEmail,
-      contact_phone: content.contactPhone,
-      organization_name: content.organizationName,
-      logo_url: content.logoUrl,
-      global_schedule_status: content.globalScheduleStatus
+      hero_title: content.heroTitle ?? '',
+      hero_subtitle: content.heroSubtitle ?? '',
+      about_text: content.aboutText ?? '',
+      methodology_text: content.methodologyText ?? '',
+      contact_email: content.contactEmail ?? '',
+      contact_phone: content.contactPhone ?? '',
+      organization_name: content.organizationName ?? '',
+      logo_url: content.logoUrl ?? '',
+      global_schedule_status: content.globalScheduleStatus ?? ''
     };
 
+    // Explicit onConflict for safety
     const { error } = await supabase
       .from('site_content')
-      .upsert(dbPayload);
+      .upsert(dbPayload, { onConflict: 'id' });
 
     if (error) {
       console.error('Error saving content:', error.message);
-      throw error; // Propagate to UI (AdminDashboard)
+      throw new Error(`Failed to save site content: ${error.message}`);
     }
   },
 
@@ -73,11 +74,9 @@ export const DataService = {
         return INITIAL_GROUPS;
       }
 
-      if (!data || data.length === 0) {
-        return INITIAL_GROUPS;
-      }
-
-      return data.map((g: any) => ({
+      // FIX: If connection succeeds but is empty, return empty array instead of fallback.
+      // This prevents the "deletion" confusion where the first real write hides the mock data.
+      return (data || []).map((g: any) => ({
         id: g.id,
         title: g.title,
         description: g.description,
@@ -130,25 +129,26 @@ export const DataService = {
   upsertGroup: async (group: GroupOffering): Promise<void> => {
     const dbPayload = {
       id: group.id,
-      title: group.title,
-      description: group.description,
-      long_description: group.longDescription,
-      benefits: group.benefits,
+      title: group.title || 'Untitled Group',
+      description: group.description || '',
+      long_description: group.longDescription || group.description || '', // Fallback to short desc if missing
+      benefits: group.benefits || [],
       type: group.type,
-      schedule: group.schedule,
-      facilitator: group.facilitator,
-      image: group.image,
-      active: group.active,
-      focus: group.focus
+      schedule: group.schedule || '',
+      facilitator: group.facilitator || '',
+      image: group.image || '',
+      active: group.active ?? false,
+      focus: group.focus || ''
     };
 
+    // FIX: Explicitly define onConflict to ensure update vs insert behavior is stable based on ID
     const { error } = await supabase
       .from('group_offerings')
-      .upsert(dbPayload);
+      .upsert(dbPayload, { onConflict: 'id' });
 
     if (error) {
       console.error("Error saving group:", error.message);
-      throw error; // Propagate to UI
+      throw new Error(`Failed to save group: ${error.message}`);
     }
   },
 
@@ -161,13 +161,14 @@ export const DataService = {
 
     if (error) {
       console.error("Error deleting group:", error.message);
-      throw error; // Propagate to UI
+      throw new Error(`Failed to delete group: ${error.message}`);
     }
   },
 
   // -- BLOG POSTS --
   getBlogPosts: async (): Promise<BlogPost[]> => {
     try {
+      // Schema: id, title, body, published, created_at, updated_at
       const { data, error } = await supabase
         .from('posts')
         .select('*')
@@ -183,12 +184,15 @@ export const DataService = {
       return data.map((p: any) => ({
         id: p.id,
         title: p.title,
-        excerpt: p.excerpt,
-        content: p.content,
-        author: p.author,
-        publishDate: p.publish_date,
-        imageUrl: p.image_url,
-        tags: p.tags || []
+        // Map DB 'body' to UI 'content'
+        content: p.body || '',
+        // Map 'created_at' to 'publishDate'
+        publishDate: p.created_at ? new Date(p.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
+        // Derived or default values for fields not in DB schema
+        excerpt: p.body ? p.body.substring(0, 150) + '...' : '', 
+        author: 'Reflective Sessions Team', 
+        imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80',
+        tags: []
       }));
     } catch (e) {
       console.warn('DataService: using fallback posts due to exception.', e);
@@ -211,12 +215,12 @@ export const DataService = {
       return {
         id: data.id,
         title: data.title,
-        excerpt: data.excerpt,
-        content: data.content,
-        author: data.author,
-        publishDate: data.publish_date,
-        imageUrl: data.image_url,
-        tags: data.tags || []
+        content: data.body || '',
+        publishDate: data.created_at ? new Date(data.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
+        excerpt: data.body ? data.body.substring(0, 150) + '...' : '',
+        author: 'Reflective Sessions Team',
+        imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80',
+        tags: []
       };
     } catch (e) {
       return INITIAL_BLOG_POSTS.find(p => p.id === id) || null;
@@ -225,24 +229,23 @@ export const DataService = {
 
   // ADMIN WRITE ACTION: Must propagate errors for UI handling
   upsertPost: async (post: BlogPost): Promise<void> => {
+    // Schema alignment: Only use fields present in Supabase 'posts' table
+    // Removing: excerpt, publish_date, image_url, tags, author
+    // Mapping: content -> body
     const dbPayload = {
       id: post.id,
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content,
-      author: post.author,
-      publish_date: post.publishDate,
-      image_url: post.imageUrl,
-      tags: post.tags
+      title: post.title || 'Untitled Post',
+      body: post.content || '',
+      published: true // Default to published
     };
 
     const { error } = await supabase
       .from('posts')
-      .upsert(dbPayload);
+      .upsert(dbPayload, { onConflict: 'id' });
 
     if (error) {
        console.error("Error saving post:", error.message);
-       throw error; // Propagate to UI
+       throw new Error(`Failed to save post: ${error.message}`);
     }
   },
 
@@ -255,7 +258,7 @@ export const DataService = {
 
     if (error) {
       console.error("Error deleting post:", error.message);
-      throw error; // Propagate to UI
+      throw new Error(`Failed to delete post: ${error.message}`);
     }
   },
 

@@ -13,28 +13,39 @@ export const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session) {
-          navigate('/admin/login');
+          // Not authenticated at all -> Login
+          navigate('/admin/login', { replace: true });
           return;
         }
 
         // Check if user exists in admin_users table
+        // Use maybeSingle() to return null instead of error if row missing
         const { data, error } = await supabase
           .from('admin_users')
           .select('user_id')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
 
-        if (error || !data) {
-          console.warn('Access denied: User not found in admin_users table.');
-          // Redirect to home page if authenticated but not admin
-          navigate('/');
+        if (error) {
+          console.error('Error verifying admin status (DB Error):', error);
+          // On system error, default to denying access for safety, but log it.
+          // In a real app, you might want to show an error screen instead of redirecting.
+          navigate('/'); 
           return;
         }
 
+        if (!data) {
+          console.warn('Access denied: User authenticated but not authorized (not in admin_users).');
+          // Authenticated but not an admin -> Public Home
+          navigate('/', { replace: true });
+          return;
+        }
+
+        // Success
         setIsAdmin(true);
       } catch (error) {
-        console.error('Error verifying admin status:', error);
-        navigate('/');
+        console.error('Unexpected error during admin check:', error);
+        navigate('/', { replace: true });
       } finally {
         setLoading(false);
       }

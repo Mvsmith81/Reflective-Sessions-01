@@ -14,7 +14,7 @@ export const INITIAL_CONTENT: SiteContent = {
 
 export const INITIAL_BLOG_POSTS: BlogPost[] = [
   {
-    id: '1',
+    id: 'd446a816-566c-4993-8a33-28f41530938f',
     title: 'The Power of Shared Experience',
     excerpt: 'Why healing in community can be more effective than healing alone.',
     content: "Humans are biologically wired for connection. When we experience stress, our nervous system looks for 'safety cues' in the faces and voices of others. In this post, we explore the neurobiology of co-regulation and why group support offers a unique pathway to resilience that individual therapy cannot always replicate.\n\nKey takeaways include understanding mirror neurons, the importance of validation, and how witnessing others' growth can catalyze our own.",
@@ -24,7 +24,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     tags: ['Community', 'Neurobiology', 'Healing']
   },
   {
-    id: '2',
+    id: 'f28a3818-6923-4246-8822-426532284920',
     title: 'Navigating the Neutral Zone',
     excerpt: 'Understanding the confusing space between an ending and a new beginning.',
     content: "William Bridges, a transition consultant, famously described transition as a three-part process: The Ending, The Neutral Zone, and The New Beginning. Most of us rush through the Neutral Zone because it feels uncomfortable and unproductive. However, this liminal space is where the real psychological realignment happens.\n\nWe discuss strategies for tolerating the ambiguity of the Neutral Zone and how to use this time for deep reflection rather than anxiety-driven action.",
@@ -38,7 +38,7 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
 // Images updated to abstract/gradient styles as per brand guidelines
 export const INITIAL_GROUPS: GroupOffering[] = [
   {
-    id: '1',
+    id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
     title: 'Navigating Transitions',
     description: 'A supportive space focusing on life transitions, identity continuity, and stress regulation for those moving through career changes, relocation, or relationship shifts.',
     longDescription: "Change is the only constant, yet it often leaves us feeling unmoored. 'Navigating Transitions' is a dedicated cohort for individuals moving through significant life chapters—whether that be a career pivot, a breakup, relocation, or a shift in family dynamics. In this group, we explore the psychology of change, the grief that often accompanies new beginnings, and practical strategies for maintaining a sense of self when everything around you is shifting.",
@@ -56,7 +56,7 @@ export const INITIAL_GROUPS: GroupOffering[] = [
     focus: 'Life Transitions'
   },
   {
-    id: '2',
+    id: '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed',
     title: 'Social Context & Identity',
     description: 'Processing systemic stressors, social dynamics, and resilience, with a specific lens on the Black experience.',
     longDescription: "This group provides a safe, affirming space to process the unique psychological toll of navigating systemic stressors and social dynamics. With a specific lens on the Black experience, we explore themes of resilience, identity, code-switching, and rest as resistance. This is a place to unmask, share openly without the need for explanation, and build community with others who understand the nuance of your lived experience.",
@@ -74,7 +74,7 @@ export const INITIAL_GROUPS: GroupOffering[] = [
     focus: 'Identity & Resilience'
   },
   {
-    id: '3',
+    id: '6ec0bd7f-11c0-43da-975e-2a8ad9ebae0b',
     title: 'Regulation & Grounding',
     description: 'Skills-based support focused on nervous system regulation and grounding techniques for emotional balance.',
     longDescription: "Do you often feel overwhelmed, on edge, or shut down? 'Regulation & Grounding' is a skills-building workshop series designed to help you befriend your nervous system. We move beyond 'just relax' advice and dive into the physiology of stress. You will learn and practice evidence-based somatic techniques to return to a state of safety and connection, building a personal toolkit for emotional balance.",
@@ -93,7 +93,7 @@ export const INITIAL_GROUPS: GroupOffering[] = [
     focus: 'Coping Skills'
   },
   {
-    id: '4',
+    id: 'c56a4180-65aa-42ec-a945-5fd21dec0538',
     title: 'Smoking Cessation & Behavior Change',
     description: 'Structured support for reducing or quitting smoking through reflection, regulation, and habit awareness.',
     longDescription: "Breaking a habit is rarely just about willpower—it's about understanding the function the behavior serves. This group offers a non-judgmental, shame-free environment to explore your relationship with smoking. We combine behavioral science with emotional regulation tools to help you identify triggers, manage cravings, and build a life that feels complete without the habit. Whether you are ready to quit today or just contemplating change, you are welcome here.",

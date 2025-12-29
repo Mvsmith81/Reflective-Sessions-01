@@ -20,7 +20,7 @@ export const AdminLogin: React.FC = () => {
     // Check if already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       }
     });
   }, [navigate]);
@@ -41,7 +41,7 @@ export const AdminLogin: React.FC = () => {
       }
 
       if (data.session) {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       }
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your credentials.');
