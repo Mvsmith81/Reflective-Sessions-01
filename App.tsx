@@ -12,6 +12,7 @@ import { GroupDetailsPage } from './pages/GroupDetailsPage';
 import { BlogPage } from './pages/BlogPage';
 import { BlogPostPage } from './pages/BlogPostPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { ResetPassword } from './pages/admin/ResetPassword';
 import { RequireAdmin } from './components/admin/RequireAdmin';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -40,8 +41,9 @@ const App: React.FC = () => {
           <Route path="/legal" element={<LegalPage />} />
         </Route>
 
-        {/* Auth Route - Explicitly Public */}
+        {/* Auth Routes - Explicitly Public */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Admin Routes - Uses wildcard to protect /admin and any subroutes */}
         <Route path="/admin/*" element={
