@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import { GroupOffering, SiteContent, BlogPost } from '../types';
 import { INITIAL_CONTENT, INITIAL_GROUPS, INITIAL_BLOG_POSTS } from '../constants';
+import { DEFAULT_GROUPS } from './defaultGroups';
 
 export const DataService = {
   // -- SITE CONTENT --
@@ -65,9 +66,11 @@ export const DataService = {
   // -- GROUPS --
   getGroups: async (): Promise<GroupOffering[]> => {
     try {
+      // Ensure we fetch ALL groups and order them consistently (by title)
       const { data, error } = await supabase
         .from('group_offerings')
-        .select('*');
+        .select('*')
+        .order('title', { ascending: true });
 
       if (error) {
         console.warn('Error fetching groups (using fallback):', error.message);
@@ -141,7 +144,8 @@ export const DataService = {
       focus: group.focus || ''
     };
 
-    // FIX: Explicitly define onConflict to ensure update vs insert behavior is stable based on ID
+    // FIX: Explicitly define onConflict to ensure update vs insert behavior is stable based on ID.
+    // This ensures we ONLY update the specific row with this ID, never wiping the table.
     const { error } = await supabase
       .from('group_offerings')
       .upsert(dbPayload, { onConflict: 'id' });
@@ -149,6 +153,34 @@ export const DataService = {
     if (error) {
       console.error("Error saving group:", error.message);
       throw new Error(`Failed to save group: ${error.message}`);
+    }
+  },
+
+  // ADMIN WRITE ACTION: Upsert all default groups. 
+  // This will overwrite the 4 default groups if they have been modified, 
+  // but will leave any other custom groups intact.
+  restoreDefaultGroups: async (): Promise<void> => {
+    const payloads = DEFAULT_GROUPS.map(group => ({
+      id: group.id,
+      title: group.title || 'Untitled Group',
+      description: group.description || '',
+      long_description: group.longDescription || group.description || '',
+      benefits: group.benefits || [],
+      type: group.type,
+      schedule: group.schedule || '',
+      facilitator: group.facilitator || '',
+      image: group.image || '',
+      active: group.active ?? false,
+      focus: group.focus || ''
+    }));
+
+    const { error } = await supabase
+      .from('group_offerings')
+      .upsert(payloads, { onConflict: 'id' });
+
+    if (error) {
+      console.error("Error restoring default groups:", error.message);
+      throw new Error(`Failed to restore default groups: ${error.message}`);
     }
   },
 
@@ -229,13 +261,14 @@ export const DataService = {
 
   // ADMIN WRITE ACTION: Must propagate errors for UI handling
   upsertPost: async (post: BlogPost): Promise<void> => {
-    // Schema alignment: Only use fields present in Supabase 'posts' table
-    // Removing: excerpt, publish_date, image_url, tags, author
-    // Mapping: content -> body
+    // Explicitly mapping UI fields to DB columns.
+    // Table 'posts' columns: id, title, body, published
+    // We intentionally exclude: excerpt, publishDate, imageUrl, tags, author (not in schema)
+    
     const dbPayload = {
       id: post.id,
       title: post.title || 'Untitled Post',
-      body: post.content || '',
+      body: post.content || '', // Map UI 'content' to DB 'body'
       published: true // Default to published
     };
 

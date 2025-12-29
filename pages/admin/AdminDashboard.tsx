@@ -45,10 +45,11 @@ const PrimaryButton: React.FC<{ onClick: () => void; children: React.ReactNode; 
   </button>
 );
 
-const SecondaryButton: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ onClick, children }) => (
+const SecondaryButton: React.FC<{ onClick: () => void; children: React.ReactNode; disabled?: boolean }> = ({ onClick, children, disabled }) => (
   <button 
     onClick={onClick}
-    className="inline-flex items-center gap-2 text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 focus:ring-4 focus:outline-none focus:ring-slate-100 font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all"
+    disabled={disabled}
+    className={`inline-flex items-center gap-2 text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 focus:ring-4 focus:outline-none focus:ring-slate-100 font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {children}
   </button>
@@ -77,6 +78,7 @@ const GroupEditor: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<GroupOffering>>({});
   const [saving, setSaving] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -115,8 +117,23 @@ const GroupEditor: React.FC = () => {
     if (!form.id || !form.title) return;
     setSaving(true);
     try {
-      await DataService.upsertGroup(form as GroupOffering);
-      await fetchGroups();
+      const groupToSave = form as GroupOffering;
+      await DataService.upsertGroup(groupToSave);
+      
+      // MERGE LOGIC: Update local state instead of replacing the entire list from server.
+      // This prevents "wiping" the list if fetchGroups behavior differs or if the DB 
+      // is transitioning from mock to real data.
+      setGroups(prevGroups => {
+        const existingIndex = prevGroups.findIndex(g => g.id === groupToSave.id);
+        if (existingIndex >= 0) {
+          const updated = [...prevGroups];
+          updated[existingIndex] = groupToSave;
+          return updated;
+        } else {
+          return [...prevGroups, groupToSave];
+        }
+      });
+      
       setEditingId(null);
     } catch (e: any) {
       alert(e.message || "Failed to save group.");
@@ -132,6 +149,21 @@ const GroupEditor: React.FC = () => {
         await fetchGroups();
       } catch (e: any) {
         alert(e.message || "Failed to delete group.");
+      }
+    }
+  };
+
+  const restoreDefaults = async () => {
+    if (confirm("Restore default groups? This will overwrite changes to the original 4 groups but keep your custom groups.")) {
+      setRestoring(true);
+      try {
+        await DataService.restoreDefaultGroups();
+        await fetchGroups();
+        alert('Default groups restored successfully.');
+      } catch (e: any) {
+        alert(e.message || "Failed to restore groups.");
+      } finally {
+        setRestoring(false);
       }
     }
   };
@@ -248,7 +280,13 @@ const GroupEditor: React.FC = () => {
            <h3 className="text-lg font-bold text-slate-900">Active Groups</h3>
            <p className="text-slate-500 text-sm">Manage your current offerings and cohorts.</p>
         </div>
-        <PrimaryButton onClick={() => startEdit()} icon={<Plus className="h-4 w-4" />}>Add Group</PrimaryButton>
+        <div className="flex gap-3">
+          <SecondaryButton onClick={restoreDefaults} disabled={restoring}>
+            <RefreshCw className={`h-4 w-4 ${restoring ? 'animate-spin' : ''}`} />
+            {restoring ? 'Restoring...' : 'Restore Defaults'}
+          </SecondaryButton>
+          <PrimaryButton onClick={() => startEdit()} icon={<Plus className="h-4 w-4" />}>Add Group</PrimaryButton>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-5">
@@ -532,6 +570,12 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'groups' | 'blog' | 'cms'>('dashboard');
   const [stats, setStats] = useState({ groups: 0, posts: 0 });
   const [user, setUser] = useState<any>(null);
+  
+  // New state for refresh functionality
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshSuccess, setRefreshSuccess] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -566,6 +610,31 @@ export const AdminDashboard: React.FC = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/admin/login', { replace: true });
+  };
+
+  const handleRefreshData = async () => {
+    setIsRefreshing(true);
+    setRefreshSuccess(false);
+    try {
+      // Re-fetch stats
+      const [g, p] = await Promise.all([DataService.getGroups(), DataService.getBlogPosts()]);
+      setStats({
+        groups: g.filter(i => i.active).length,
+        posts: p.length
+      });
+      
+      // Force remount of active tab content to fetch fresh data
+      setRefreshKey(prev => prev + 1);
+      
+      // Show success message
+      setRefreshSuccess(true);
+      setTimeout(() => setRefreshSuccess(false), 2000);
+    } catch (e) {
+      console.error("Refresh failed", e);
+      alert("Failed to refresh data.");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const SidebarItem: React.FC<{ 
@@ -674,6 +743,20 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-slate-500 mt-1">Overview of your platform's performance.</p>
           </div>
           <div className="flex items-center gap-4">
+             {/* Refresh Button */}
+             <button 
+               onClick={handleRefreshData}
+               disabled={isRefreshing}
+               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                 refreshSuccess 
+                   ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                   : 'bg-white text-slate-600 border border-slate-200 hover:border-[#4DA3FF] hover:text-[#4DA3FF]'
+               }`}
+             >
+               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+               {isRefreshing ? 'Loading...' : refreshSuccess ? 'Refreshed' : 'Refresh Data'}
+             </button>
+
              <div className="hidden md:block text-right">
                 <div className="text-sm font-bold text-slate-900">Admin User</div>
                 <div className="text-xs text-slate-500">{user?.email}</div>
@@ -686,7 +769,7 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {activeTab === 'dashboard' && (
-            <div className="space-y-8">
+            <div key={refreshKey} className="space-y-8">
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatsCard title="Active Groups" value={stats.groups} icon={<Users className="h-6 w-6" />} trend="Current" />
                 <StatsCard title="Published Posts" value={stats.posts} icon={<BookOpen className="h-6 w-6" />} trend="Total" />
@@ -714,9 +797,9 @@ export const AdminDashboard: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'groups' && <GroupEditor />}
-          {activeTab === 'blog' && <BlogEditor />}
-          {activeTab === 'cms' && <ContentCMS />}
+          {activeTab === 'groups' && <GroupEditor key={refreshKey} />}
+          {activeTab === 'blog' && <BlogEditor key={refreshKey} />}
+          {activeTab === 'cms' && <ContentCMS key={refreshKey} />}
         </div>
       </main>
     </div>
