@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 import { GroupOffering, SiteContent, BlogPost } from '../types';
-import { INITIAL_CONTENT, INITIAL_GROUPS, INITIAL_BLOG_POSTS } from '../constants';
+import { INITIAL_CONTENT, INITIAL_GROUPS, BLOG_RSS_URL } from '../constants';
 import { DEFAULT_GROUPS } from './defaultGroups';
 
 export const DataService = {
@@ -197,101 +197,69 @@ export const DataService = {
     }
   },
 
-  // -- BLOG POSTS --
+  // -- BLOG POSTS (RSS) --
   getBlogPosts: async (): Promise<BlogPost[]> => {
     try {
-      // Schema: id, title, body, published, created_at, updated_at
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Use AllOrigins proxy to bypass CORS restrictions on client-side fetch
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(BLOG_RSS_URL);
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) throw new Error('Failed to fetch RSS feed');
+      
+      const text = await response.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, "text/xml");
+      const items = Array.from(xml.querySelectorAll("item"));
 
-      if (error) {
-        console.warn('Error fetching posts (using fallback):', error.message);
-        return INITIAL_BLOG_POSTS;
-      }
+      // Helper to clean HTML text
+      const stripHtml = (html: string) => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        return doc.body.textContent || "";
+      };
 
-      if (!data || data.length === 0) return INITIAL_BLOG_POSTS;
+      // Helper to extract first image
+      const extractImage = (html: string): string => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const img = doc.querySelector('img');
+        return img ? img.src : 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80';
+      };
 
-      return data.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        // Map DB 'body' to UI 'content'
-        content: p.body || '',
-        // Map 'created_at' to 'publishDate'
-        publishDate: p.created_at ? new Date(p.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
-        // Derived or default values for fields not in DB schema
-        excerpt: p.body ? p.body.substring(0, 150) + '...' : '', 
-        author: 'Reflective Sessions Team', 
-        imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80',
-        tags: []
-      }));
+      return items.slice(0, 10).map((item) => {
+        const title = item.querySelector("title")?.textContent || "Untitled Post";
+        const link = item.querySelector("link")?.textContent || "#";
+        const pubDateStr = item.querySelector("pubDate")?.textContent || "";
+        const descriptionHtml = item.querySelector("description")?.textContent || "";
+        
+        // Try content:encoded if description is empty or short, though standard RSS usually puts full content in description for Blogger
+        const content = descriptionHtml; 
+        
+        return {
+          id: link, // Use URL as unique ID
+          title: title,
+          content: content,
+          publishDate: pubDateStr ? new Date(pubDateStr).toLocaleDateString() : 'Recent',
+          excerpt: stripHtml(content).substring(0, 200) + '...',
+          author: 'Reflective Sessions Team',
+          imageUrl: extractImage(content),
+          tags: [],
+          externalLink: link
+        };
+      });
+
     } catch (e) {
-      console.warn('DataService: using fallback posts due to exception.', e);
-      return INITIAL_BLOG_POSTS;
+      console.error('Error fetching RSS feed:', e);
+      return [];
     }
   },
 
   getBlogPostById: async (id: string): Promise<BlogPost | null> => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error || !data) {
-        return INITIAL_BLOG_POSTS.find(p => p.id === id) || null;
-      }
-
-      return {
-        id: data.id,
-        title: data.title,
-        content: data.body || '',
-        publishDate: data.created_at ? new Date(data.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
-        excerpt: data.body ? data.body.substring(0, 150) + '...' : '',
-        author: 'Reflective Sessions Team',
-        imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80',
-        tags: []
-      };
+      const posts = await DataService.getBlogPosts();
+      const decodedId = decodeURIComponent(id);
+      return posts.find(p => p.id === id || p.id === decodedId) || null;
     } catch (e) {
-      return INITIAL_BLOG_POSTS.find(p => p.id === id) || null;
-    }
-  },
-
-  // ADMIN WRITE ACTION: Must propagate errors for UI handling
-  upsertPost: async (post: BlogPost): Promise<void> => {
-    // Explicitly mapping UI fields to DB columns.
-    // Table 'posts' columns: id, title, body, published
-    // We intentionally exclude: excerpt, publishDate, imageUrl, tags, author (not in schema)
-    
-    const dbPayload = {
-      id: post.id,
-      title: post.title || 'Untitled Post',
-      body: post.content || '', // Map UI 'content' to DB 'body'
-      published: true // Default to published
-    };
-
-    const { error } = await supabase
-      .from('posts')
-      .upsert(dbPayload, { onConflict: 'id' });
-
-    if (error) {
-       console.error("Error saving post:", error.message);
-       throw new Error(`Failed to save post: ${error.message}`);
-    }
-  },
-
-  // ADMIN WRITE ACTION: Must propagate errors for UI handling
-  deletePost: async (id: string): Promise<void> => {
-    const { error } = await supabase
-      .from('posts')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error("Error deleting post:", error.message);
-      throw new Error(`Failed to delete post: ${error.message}`);
+      console.error('Error fetching blog post by id:', e);
+      return null;
     }
   },
 

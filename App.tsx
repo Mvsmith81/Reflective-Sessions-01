@@ -10,7 +10,6 @@ import { HowItWorksPage } from './pages/HowItWorksPage';
 import { GroupIntakePage } from './pages/GroupIntakePage';
 import { GroupDetailsPage } from './pages/GroupDetailsPage';
 import { BlogPage } from './pages/BlogPage';
-import { BlogPostPage } from './pages/BlogPostPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { ResetPassword } from './pages/admin/ResetPassword';
 import { RequireAdmin } from './components/admin/RequireAdmin';
@@ -36,7 +35,6 @@ const App: React.FC = () => {
           <Route path="/group-intake" element={<GroupIntakePage />} />
           <Route path="/groups/:groupId" element={<GroupDetailsPage />} />
           <Route path="/blog" element={<BlogPage />} />
-          <Route path="/blog/:postId" element={<BlogPostPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/legal" element={<LegalPage />} />
         </Route>

@@ -27,6 +27,7 @@ export interface BlogPost {
   publishDate: string;
   imageUrl: string;
   tags: string[];
+  externalLink?: string; // URL to the external blog post
 }
 
 export interface SiteContent {

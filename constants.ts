@@ -1,5 +1,7 @@
 import { GroupOffering, GroupType, SiteContent, BlogPost } from './types';
 
+export const BLOG_RSS_URL = "https://blog.reflectivesessions.org/feeds/posts/default?alt=rss";
+
 export const INITIAL_CONTENT: SiteContent = {
   heroTitle: "Structured Support. Facilitated Growth.",
   heroSubtitle: "Reflective Sessions offers clinically guided, virtual group spaces for adults navigating life's complexities. Not therapy, but therapeutic.",
@@ -12,28 +14,7 @@ export const INITIAL_CONTENT: SiteContent = {
   globalScheduleStatus: "All sessions are due to start March of 2026."
 };
 
-export const INITIAL_BLOG_POSTS: BlogPost[] = [
-  {
-    id: 'd446a816-566c-4993-8a33-28f41530938f',
-    title: 'The Power of Shared Experience',
-    excerpt: 'Why healing in community can be more effective than healing alone.',
-    content: "Humans are biologically wired for connection. When we experience stress, our nervous system looks for 'safety cues' in the faces and voices of others. In this post, we explore the neurobiology of co-regulation and why group support offers a unique pathway to resilience that individual therapy cannot always replicate.\n\nKey takeaways include understanding mirror neurons, the importance of validation, and how witnessing others' growth can catalyze our own.",
-    author: 'Ashley Smith, PMHNP-BC',
-    publishDate: '2023-10-15',
-    imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80',
-    tags: ['Community', 'Neurobiology', 'Healing']
-  },
-  {
-    id: 'f28a3818-6923-4246-8822-426532284920',
-    title: 'Navigating the Neutral Zone',
-    excerpt: 'Understanding the confusing space between an ending and a new beginning.',
-    content: "William Bridges, a transition consultant, famously described transition as a three-part process: The Ending, The Neutral Zone, and The New Beginning. Most of us rush through the Neutral Zone because it feels uncomfortable and unproductive. However, this liminal space is where the real psychological realignment happens.\n\nWe discuss strategies for tolerating the ambiguity of the Neutral Zone and how to use this time for deep reflection rather than anxiety-driven action.",
-    author: 'Reflective Sessions Team',
-    publishDate: '2023-11-02',
-    imageUrl: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&q=80',
-    tags: ['Transitions', 'Growth', 'Psychology']
-  }
-];
+export const INITIAL_BLOG_POSTS: BlogPost[] = []; // Left empty as we now fetch from RSS
 
 // Images updated to abstract/gradient styles as per brand guidelines
 export const INITIAL_GROUPS: GroupOffering[] = [

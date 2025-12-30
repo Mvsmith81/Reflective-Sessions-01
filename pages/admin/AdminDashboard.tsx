@@ -4,13 +4,70 @@ import { supabase } from '../../services/supabaseClient';
 import { GroupOffering, SiteContent, GroupType, BlogPost } from '../../types';
 import { 
   LayoutDashboard, Users, FileText, Plus, Trash2, Edit2, Save, 
-  LogOut, RefreshCw, Calendar, ExternalLink, BookOpen, Image as ImageIcon,
-  ChevronRight, Search, BarChart3, Globe, Shield, PenTool, CheckCircle, XCircle,
-  Menu, X
+  LogOut, RefreshCw, Calendar, ExternalLink, Image as ImageIcon,
+  ChevronRight, BarChart3, Globe, Shield, CheckCircle, XCircle,
+  Menu, X, BookOpen, FileSpreadsheet, MapPin, Video, Lock, PenTool,
+  MessageSquare, Clock, AlertTriangle, Folder, File, Sparkles
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
-// -- UI Primitives --
+// --- CONSTANTS: Quick Links Configuration ---
+
+const ADMIN_LINKS = [
+  {
+    category: "Intake & Scheduling",
+    description: "Manage incoming inquiries and calendar logistics.",
+    icon: <Calendar className="h-5 w-5 text-blue-500" />,
+    links: [
+      { label: "Group Intake Tracker", url: "https://docs.google.com/spreadsheets/d/1_aj9b1swl_DoB9XcBHmve-j2PwF4V48L0xVgY33O2hQ/edit?usp=sharing", icon: <FileSpreadsheet className="h-4 w-4" /> },
+      { label: "Contact & Inquiry Log", url: "https://docs.google.com/spreadsheets/d/1J7ROu-W0yoC_Atl1mjH10sD29hgqvmQmrgjYPL3IBhI/edit?usp=sharing", icon: <MessageSquare className="h-4 w-4" /> },
+      { label: "Waitlist", url: "https://docs.google.com/spreadsheets/d/17WsWCGeUh9Ub9qjWAN6_D2JKcxvwsZB8/edit?gid=1126581154#gid=1126581154", icon: <Clock className="h-4 w-4" /> },
+      { label: "Athena Scheduling (Consumer)", url: "https://consumer.scheduling.athena.io/?locationId=28674-1", icon: <Users className="h-4 w-4" /> },
+      { label: "Staff Calendar", url: "https://calendar.google.com/calendar/u/0?cid=NTNlOWRmZWFhNjE3ZWZmOGRhYWNiMWM1MWRhODhhNDU5NzQ4MGMzNzgwY2NjMDBiN2JjY2Y5MjJjNTRkZTdiYUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t", icon: <Calendar className="h-4 w-4" /> },
+      { label: "Booking Hub", url: "https://calendar.app.google/khV36kJ9si3cn98G7", icon: <ExternalLink className="h-4 w-4" /> },
+    ]
+  },
+  {
+    category: "Participants & Attendance",
+    description: "Rosters, attendance tracking, and follow-ups.",
+    icon: <Users className="h-5 w-5 text-purple-500" />,
+    links: [
+      { label: "Master Roster", url: "https://docs.google.com/spreadsheets/d/17WsWCGeUh9Ub9qjWAN6_D2JKcxvwsZB8/edit?gid=1643055914#gid=1643055914", icon: <Users className="h-4 w-4" /> },
+      { label: "Attendance Tracker", url: "https://docs.google.com/spreadsheets/d/17WsWCGeUh9Ub9qjWAN6_D2JKcxvwsZB8/edit?gid=2069395245#gid=2069395245", icon: <CheckCircle className="h-4 w-4" /> },
+      { label: "Follow-up Log", url: "https://docs.google.com/spreadsheets/d/17WsWCGeUh9Ub9qjWAN6_D2JKcxvwsZB8/edit?gid=1444488769#gid=1444488769", icon: <FileText className="h-4 w-4" /> },
+      { label: "Staff Directory", url: "https://docs.google.com/spreadsheets/d/17WsWCGeUh9Ub9qjWAN6_D2JKcxvwsZB8/edit?gid=102325369#gid=102325369", icon: <Users className="h-4 w-4" /> },
+    ]
+  },
+  {
+    category: "Documents & Resources",
+    description: "Protocols, assets, and learning modules.",
+    icon: <Folder className="h-5 w-5 text-emerald-500" />,
+    links: [
+      { label: "Modules (PDFs)", url: "https://drive.google.com/drive/folders/1RZprVLfKUWUfTPVtPfssvyqy_V3e9XoC?usp=drive_link", icon: <File className="h-4 w-4" /> },
+      { label: "Modules (Editable)", url: "https://drive.google.com/drive/folders/1xknDLdL7lI22UBNmmZu6ZPWVArkh8IvK?usp=drive_link", icon: <Edit2 className="h-4 w-4" /> },
+      { label: "Templates Folder", url: "https://drive.google.com/drive/folders/1ZowbBalW6yezhgNtQR9A3xF3i6RrG3WL?usp=drive_link", icon: <Folder className="h-4 w-4" /> },
+      { label: "Admin & Planning Drive", url: "https://drive.google.com/drive/folders/1PcuZCun4NjZZx15W_r4GXRFLJvMT_aVQ?usp=drive_link", icon: <Folder className="h-4 w-4" /> },
+      { label: "Brand Assets", url: "https://drive.google.com/drive/folders/1a9m5O63vs8Tfl2BljaT-TMkpataNZDHz?usp=drive_link", icon: <ImageIcon className="h-4 w-4" /> },
+      { label: "Safety Protocol", url: "https://drive.google.com/file/d/19GjMiFrPZxcXyfqfU20YNJwNNTHjgRXv/view?usp=drive_link", icon: <Shield className="h-4 w-4" /> },
+      { label: "Incident Report Form", url: "https://drive.google.com/file/d/10Z2pCtO4rpBEORp7xHqckxt_nI3NGuqA/view?usp=drive_link", icon: <AlertTriangle className="h-4 w-4" /> },
+    ]
+  },
+  {
+    category: "Platform Operations",
+    description: "Technical tools and financial systems.",
+    icon: <Globe className="h-5 w-5 text-slate-500" />,
+    links: [
+      { label: "Google Sites Admin", url: "https://sites.google.com/view/reflective-sessions-adm/home", icon: <LayoutDashboard className="h-4 w-4" /> },
+      { label: "Supabase Dashboard", url: "https://supabase.com/dashboard/project/hznbajfzayqigkjsfklk", icon: <Lock className="h-4 w-4" /> },
+      { label: "Netlify Dashboard", url: "https://app.netlify.com/projects/luxury-cajeta-ad3236/overview", icon: <Globe className="h-4 w-4" /> },
+      { label: "QuickBooks Online", url: "https://accounts.intuit.com/app/sign-in?app_group=QBO&asset_alias=Intuit.accounting.core.qbowebapp&iux_tests=47287%3A11%3A113998", icon: <FileText className="h-4 w-4" /> },
+      { label: "GitHub Repo", url: "https://github.com/Mvsmith81/Reflective-Sessions-01", icon: <PenTool className="h-4 w-4" /> },
+      { label: "Google AI Studio", url: "https://aistudio.google.com/apps/drive/1coSYzytTCHMJ2LsTjNSVKUHBP5YK8AQx?showPreview=true&showAssistant=true", icon: <Sparkles className="h-4 w-4" /> },
+    ]
+  }
+];
+
+// --- UI Primitives ---
 
 const InputGroup: React.FC<{ label: string; children: React.ReactNode; subLabel?: string }> = ({ label, children, subLabel }) => (
   <div className="mb-5">
@@ -36,42 +93,228 @@ const ModernTextArea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>
   />
 );
 
-const PrimaryButton: React.FC<{ onClick: () => void; children: React.ReactNode; icon?: React.ReactNode; disabled?: boolean }> = ({ onClick, children, icon, disabled }) => (
-  <button 
-    onClick={onClick}
-    disabled={disabled}
-    className="inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-  >
-    {icon} {children}
-  </button>
-);
+const PrimaryButton: React.FC<{ onClick?: () => void; children: React.ReactNode; icon?: React.ReactNode; disabled?: boolean; href?: string; target?: string }> = ({ onClick, children, icon, disabled, href, target }) => {
+  const className = "inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed";
+  
+  if (href) {
+    return <a href={href} target={target} rel="noopener noreferrer" className={className}>{icon} {children}</a>;
+  }
+  return (
+    <button onClick={onClick} disabled={disabled} className={className}>
+      {icon} {children}
+    </button>
+  );
+};
 
-const SecondaryButton: React.FC<{ onClick: () => void; children: React.ReactNode; disabled?: boolean }> = ({ onClick, children, disabled }) => (
-  <button 
-    onClick={onClick}
-    disabled={disabled}
-    className={`inline-flex items-center justify-center gap-2 text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 focus:ring-4 focus:outline-none focus:ring-slate-100 font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-  >
-    {children}
-  </button>
-);
+const SecondaryButton: React.FC<{ onClick?: () => void; children: React.ReactNode; disabled?: boolean; href?: string; target?: string }> = ({ onClick, children, disabled, href, target }) => {
+  const className = `inline-flex items-center justify-center gap-2 text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 focus:ring-4 focus:outline-none focus:ring-slate-100 font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+  
+  if (href) {
+    return <a href={href} target={target} rel="noopener noreferrer" className={className}>{children}</a>;
+  }
+  return (
+    <button onClick={onClick} disabled={disabled} className={className}>
+      {children}
+    </button>
+  );
+};
 
-const StatsCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; trend?: string }> = ({ title, value, icon, trend }) => (
-  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300">
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">{title}</p>
-        <h3 className="text-2xl md:text-3xl font-bold text-slate-900">{value}</h3>
-        {trend && <p className="text-emerald-500 text-xs font-medium mt-2 flex items-center gap-1">↑ {trend}</p>}
+// --- SUB-VIEWS: Dashboard Components ---
+
+const BlogManager: React.FC = () => {
+  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    DataService.getBlogPosts().then(posts => {
+      // Take only top 5 for the admin widget
+      setRecentPosts(posts.slice(0, 5));
+      setLoading(false);
+    });
+  }, []);
+
+  return (
+    <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-slate-100 pb-6">
+        <div>
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-[#A855F7]" /> Blog Management
+          </h3>
+          <p className="text-slate-500 text-sm mt-1">Manage articles on the external Blogger platform.</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <SecondaryButton href="https://www.blogger.com" target="_blank">
+            <ExternalLink className="h-4 w-4" /> Manage Posts
+          </SecondaryButton>
+          <PrimaryButton href="https://www.blogger.com" target="_blank" icon={<PenTool className="h-4 w-4" />}>
+            Write New Post
+          </PrimaryButton>
+        </div>
       </div>
-      <div className="p-3 bg-slate-50 rounded-xl text-[#4DA3FF]">
-        {icon}
+
+      <div>
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Recent Activity (Live Feed)</h4>
+        {loading ? (
+          <div className="text-center py-8 text-slate-400 text-sm animate-pulse">Loading recent posts...</div>
+        ) : recentPosts.length > 0 ? (
+          <div className="space-y-3">
+            {recentPosts.map(post => (
+              <div key={post.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border border-slate-100">
+                <div className="min-w-0 flex-1 pr-4">
+                  <h5 className="font-semibold text-slate-900 truncate">{post.title}</h5>
+                  <p className="text-xs text-slate-500 flex items-center gap-2 mt-1">
+                    <Calendar className="h-3 w-3" /> Published: {post.publishDate}
+                  </p>
+                </div>
+                <a 
+                  href={post.externalLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 text-slate-400 hover:text-[#4DA3FF] hover:bg-white rounded-lg transition-all"
+                  title="View Live"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm">
+            No posts found or feed unavailable.
+          </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-// -- Editors --
+const QuickLinksSection: React.FC = () => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+      {ADMIN_LINKS.map((category, idx) => (
+        <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2.5 bg-slate-50 rounded-xl">
+              {category.icon}
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900">{category.category}</h4>
+              <p className="text-xs text-slate-500 line-clamp-1">{category.description}</p>
+            </div>
+          </div>
+          <div className="space-y-2 mt-auto">
+            {category.links.map((link, lIdx) => (
+              <a 
+                key={lIdx}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 rounded-xl text-sm font-medium text-slate-600 hover:text-[#4DA3FF] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-400 group-hover:text-[#4DA3FF] transition-colors">{link.icon}</span>
+                  {link.label}
+                </div>
+                <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const DashboardHome: React.FC<{ userEmail?: string }> = ({ userEmail }) => {
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-8 rounded-3xl text-white shadow-xl shadow-slate-300/50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-60 h-60 bg-[#4DA3FF]/10 rounded-full blur-3xl -ml-10 -mb-10"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Welcome Back</h2>
+            <p className="text-slate-300 text-sm max-w-xl">
+              Logged in as <span className="text-white font-semibold">{userEmail}</span>. 
+              Access your operational tools below. Remember: Structure is kindness.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <a 
+              href="https://www.dreamucares.org/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              DreamU Main Site <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Layout Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Left Col: Blog & High Priority */}
+        <div className="xl:col-span-2 space-y-8">
+           <BlogManager />
+           
+           <div>
+             <h3 className="text-lg font-bold text-slate-900 mb-4 px-2">Operational Quick Links</h3>
+             <QuickLinksSection />
+           </div>
+        </div>
+
+        {/* Right Col: Admin Shortcuts (Simplified from original) */}
+        <div className="xl:col-span-1 space-y-6">
+           {/* Primary Callout */}
+           <div className="bg-blue-50 border border-blue-100 p-6 rounded-3xl">
+              <h4 className="font-bold text-[#4DA3FF] mb-2 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" /> Safety First
+              </h4>
+              <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                Reflective Sessions is not emergency care. If a participant is in crisis:
+              </p>
+              <ul className="text-sm text-slate-600 space-y-2 mb-6 list-disc pl-4">
+                <li>Direct to 988 (Crisis Line)</li>
+                <li>Call 911 if immediate danger</li>
+                <li>Complete Incident Report</li>
+              </ul>
+              <a 
+                href="https://drive.google.com/file/d/19GjMiFrPZxcXyfqfU20YNJwNNTHjgRXv/view?usp=drive_link"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-3 bg-white border border-blue-200 text-blue-600 font-semibold rounded-xl text-sm hover:bg-blue-50 transition-colors"
+              >
+                View Safety Protocol
+              </a>
+           </div>
+
+           {/* Support */}
+           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+             <h4 className="font-bold text-slate-900 mb-4">Admin Support</h4>
+             <p className="text-xs text-slate-500 mb-4">
+               For technical issues with the website or dashboard, check the status or contact the developer.
+             </p>
+             <div className="space-y-2">
+               <a href="https://app.netlify.com/projects/luxury-cajeta-ad3236/overview" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  Netlify Status
+               </a>
+               <a href="https://supabase.com/dashboard/project/hznbajfzayqigkjsfklk" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  Database Status
+               </a>
+             </div>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- EXISTING EDITORS (Preserved Logic) ---
 
 const GroupEditor: React.FC = () => {
   const [groups, setGroups] = useState<GroupOffering[]>([]);
@@ -338,143 +581,6 @@ const GroupEditor: React.FC = () => {
   );
 };
 
-const BlogEditor: React.FC = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<Partial<BlogPost>>({});
-  const [saving, setSaving] = useState(false);
-
-  const fetchPosts = async () => {
-    setLoading(true);
-    const data = await DataService.getBlogPosts();
-    setPosts(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  const startEdit = (post?: BlogPost) => {
-    if (post) {
-      setEditingId(post.id);
-      setForm(post);
-    } else {
-      setEditingId('new');
-      setForm({
-        id: crypto.randomUUID(),
-        title: '',
-        author: 'Reflective Sessions Team',
-        publishDate: new Date().toLocaleDateString(),
-        imageUrl: 'https://images.unsplash.com/photo-1499750310159-52f8f4347504?auto=format&fit=crop&q=80',
-        excerpt: '',
-        content: '',
-        tags: []
-      });
-    }
-  };
-
-  const savePost = async () => {
-    if (!form.id || !form.title) return;
-    setSaving(true);
-    try {
-      await DataService.upsertPost(form as BlogPost);
-      await fetchPosts();
-      setEditingId(null);
-    } catch (e: any) {
-      alert(e.message || "Failed to save post.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const deletePost = async (id: string) => {
-    if (confirm('Delete this post?')) {
-      try {
-        await DataService.deletePost(id);
-        await fetchPosts();
-      } catch (e: any) {
-         alert(e.message || "Failed to delete post.");
-      }
-    }
-  };
-
-  if (editingId) {
-    return (
-      <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-4 border-b border-slate-100 gap-4">
-           <div>
-             <h3 className="text-xl font-bold text-slate-900">Article Editor</h3>
-             <p className="text-slate-400 text-sm">Write thoughts, updates, and psychoeducational content.</p>
-           </div>
-           <SecondaryButton onClick={() => setEditingId(null)}>Cancel</SecondaryButton>
-        </div>
-
-        <div className="space-y-6 max-w-4xl mx-auto">
-          <InputGroup label="Article Title">
-             <ModernInput value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="text-lg font-semibold" placeholder="Enter a catchy title..." />
-          </InputGroup>
-
-          <InputGroup label="Content" subLabel="Main article body. Supports basic line breaks.">
-             <ModernTextArea value={form.content} onChange={e => setForm({...form, content: e.target.value})} style={{ minHeight: '400px', fontFamily: 'monospace'}} />
-          </InputGroup>
-
-          <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-400">
-             Note: Author, Image, and Date are managed automatically or using defaults to ensure database compatibility.
-          </div>
-
-          <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row justify-end gap-3">
-             <SecondaryButton onClick={() => setEditingId(null)}>Discard</SecondaryButton>
-             <PrimaryButton onClick={savePost} disabled={saving} icon={<Save className="h-4 w-4" />}>
-               {saving ? 'Saving...' : 'Publish Article'}
-             </PrimaryButton>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) return <div className="p-10 text-center text-slate-500">Loading Posts...</div>;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-           <h3 className="text-lg font-bold text-slate-900">Blog Posts</h3>
-           <p className="text-slate-500 text-sm">Manage your publication feed.</p>
-        </div>
-        <PrimaryButton onClick={() => startEdit()} icon={<PenTool className="h-4 w-4" />}>Write Post</PrimaryButton>
-      </div>
-      
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-         {posts.length === 0 && <div className="p-6 text-center text-slate-400">No posts found. Create one!</div>}
-         {posts.map((post, idx) => (
-           <div key={post.id} className={`p-5 flex flex-col sm:flex-row items-center justify-between hover:bg-slate-50 transition-colors gap-4 ${idx !== posts.length -1 ? 'border-b border-slate-50' : ''}`}>
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                 <div className="h-12 w-12 rounded-lg bg-slate-100 overflow-hidden shrink-0">
-                    <img src={post.imageUrl} className="w-full h-full object-cover" alt="" />
-                 </div>
-                 <div className="min-w-0 flex-grow">
-                    <h4 className="font-bold text-slate-900 truncate">{post.title}</h4>
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                       <span>{post.publishDate}</span>
-                       <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300"></span>
-                       <span className="hidden sm:inline">{post.author}</span>
-                    </div>
-                 </div>
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                 <button onClick={() => startEdit(post)} className="text-sm font-medium text-slate-500 hover:text-[#4DA3FF] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">Edit</button>
-                 <button onClick={() => deletePost(post.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
-              </div>
-           </div>
-         ))}
-      </div>
-    </div>
-  );
-};
-
 const ContentCMS: React.FC = () => {
   const [content, setContent] = useState<SiteContent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -577,11 +683,10 @@ const ContentCMS: React.FC = () => {
   );
 };
 
-// -- Main Admin Layout/Router --
+// --- MAIN SHELL: Admin Dashboard Layout ---
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'groups' | 'blog' | 'cms'>('dashboard');
-  const [stats, setStats] = useState({ groups: 0, posts: 0 });
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'groups' | 'cms'>('dashboard');
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -606,13 +711,6 @@ export const AdminDashboard: React.FC = () => {
       }
     });
 
-    Promise.all([DataService.getGroups(), DataService.getBlogPosts()]).then(([g, p]) => {
-      setStats({
-        groups: g.filter(i => i.active).length,
-        posts: p.length
-      });
-    });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -625,12 +723,7 @@ export const AdminDashboard: React.FC = () => {
     setIsRefreshing(true);
     setRefreshSuccess(false);
     try {
-      const [g, p] = await Promise.all([DataService.getGroups(), DataService.getBlogPosts()]);
-      setStats({
-        groups: g.filter(i => i.active).length,
-        posts: p.length
-      });
-      
+      // Logic to trigger re-fetches in sub-components via key
       setRefreshKey(prev => prev + 1);
       
       setRefreshSuccess(true);
@@ -721,13 +814,6 @@ export const AdminDashboard: React.FC = () => {
             onClick={() => setActiveTab('groups')} 
           />
           <SidebarItem 
-            id="blog" 
-            label="Blog Posts" 
-            icon={<BookOpen className="h-5 w-5" />} 
-            active={activeTab === 'blog'} 
-            onClick={() => setActiveTab('blog')} 
-          />
-          <SidebarItem 
             id="cms" 
             label="Site Content" 
             icon={<FileText className="h-5 w-5" />} 
@@ -736,16 +822,16 @@ export const AdminDashboard: React.FC = () => {
           />
 
           <div className="px-4 pb-2 pt-6">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">External</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">System</p>
           </div>
           <a 
-            href="https://sites.google.com/view/reflective-sessions-adm/home"
+            href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/50 hover:text-[#A855F7] transition-all font-medium group"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/50 hover:text-[#4DA3FF] transition-all font-medium group"
           >
-            <ExternalLink className="h-5 w-5 text-slate-400 group-hover:text-[#A855F7]" />
-            Admin Hub
+            <ExternalLink className="h-5 w-5 text-slate-400 group-hover:text-[#4DA3FF]" />
+            View Public Site
           </a>
         </nav>
 
@@ -768,7 +854,7 @@ export const AdminDashboard: React.FC = () => {
             </button>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900 capitalize tracking-tight">
-                {activeTab === 'cms' ? 'Content Management' : activeTab === 'blog' ? 'Blog Management' : activeTab}
+                {activeTab === 'cms' ? 'Content Management' : activeTab}
               </h1>
               <p className="text-slate-500 mt-1 text-sm">Manage your platform's core content.</p>
             </div>
@@ -801,37 +887,8 @@ export const AdminDashboard: React.FC = () => {
         </header>
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {activeTab === 'dashboard' && (
-            <div key={refreshKey} className="space-y-8">
-               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatsCard title="Active Groups" value={stats.groups} icon={<Users className="h-6 w-6" />} trend="Current" />
-                <StatsCard title="Published Posts" value={stats.posts} icon={<BookOpen className="h-6 w-6" />} trend="Total" />
-                <StatsCard title="Total Views" value="--" icon={<BarChart3 className="h-6 w-6" />} trend="--" />
-              </div>
-              
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 md:p-8 rounded-3xl text-white shadow-xl shadow-slate-300/50 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                  <div className="relative z-10">
-                    <h3 className="text-xl md:text-2xl font-bold mb-2">Inquiry Management</h3>
-                    <p className="text-slate-300 max-w-lg leading-relaxed text-sm md:text-base">
-                      All participant inquiries are currently routed through the Google Forms integration. 
-                      Please access the Master Sheet to review and approve new applicants.
-                    </p>
-                  </div>
-                  <a 
-                    href="https://docs.google.com/spreadsheets/u/0/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="relative z-10 w-full md:w-auto px-6 py-3 bg-white text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors shadow-lg"
-                  >
-                    Open Master Sheet <ExternalLink className="h-4 w-4" />
-                  </a>
-              </div>
-            </div>
-          )}
-
+          {activeTab === 'dashboard' && <DashboardHome key={refreshKey} userEmail={user?.email} />}
           {activeTab === 'groups' && <GroupEditor key={refreshKey} />}
-          {activeTab === 'blog' && <BlogEditor key={refreshKey} />}
           {activeTab === 'cms' && <ContentCMS key={refreshKey} />}
         </div>
       </main>
