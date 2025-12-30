@@ -5,7 +5,8 @@ import { GroupOffering, SiteContent, GroupType, BlogPost } from '../../types';
 import { 
   LayoutDashboard, Users, FileText, Plus, Trash2, Edit2, Save, 
   LogOut, RefreshCw, Calendar, ExternalLink, BookOpen, Image as ImageIcon,
-  ChevronRight, Search, BarChart3, Globe, Shield, PenTool, CheckCircle, XCircle
+  ChevronRight, Search, BarChart3, Globe, Shield, PenTool, CheckCircle, XCircle,
+  Menu, X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -24,14 +25,14 @@ const InputGroup: React.FC<{ label: string; children: React.ReactNode; subLabel?
 const ModernInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
   <input 
     {...props}
-    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#4DA3FF]/50 focus:border-[#4DA3FF] block w-full p-3 transition-all outline-none hover:bg-white"
+    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#4DA3FF]/50 focus:border-[#4DA3FF] block p-3 transition-all outline-none hover:bg-white"
   />
 );
 
 const ModernTextArea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
   <textarea 
     {...props}
-    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#4DA3FF]/50 focus:border-[#4DA3FF] block w-full p-3 transition-all outline-none hover:bg-white min-h-[120px]"
+    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#4DA3FF]/50 focus:border-[#4DA3FF] block p-3 transition-all outline-none hover:bg-white min-h-[120px]"
   />
 );
 
@@ -39,7 +40,7 @@ const PrimaryButton: React.FC<{ onClick: () => void; children: React.ReactNode; 
   <button 
     onClick={onClick}
     disabled={disabled}
-    className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+    className="inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
   >
     {icon} {children}
   </button>
@@ -49,7 +50,7 @@ const SecondaryButton: React.FC<{ onClick: () => void; children: React.ReactNode
   <button 
     onClick={onClick}
     disabled={disabled}
-    className={`inline-flex items-center gap-2 text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 focus:ring-4 focus:outline-none focus:ring-slate-100 font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    className={`inline-flex items-center justify-center gap-2 text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 focus:ring-4 focus:outline-none focus:ring-slate-100 font-medium rounded-xl text-sm px-5 py-2.5 text-center transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {children}
   </button>
@@ -59,8 +60,8 @@ const StatsCard: React.FC<{ title: string; value: string | number; icon: React.R
   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300">
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
-        <h3 className="text-3xl font-bold text-slate-900">{value}</h3>
+        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">{title}</p>
+        <h3 className="text-2xl md:text-3xl font-bold text-slate-900">{value}</h3>
         {trend && <p className="text-emerald-500 text-xs font-medium mt-2 flex items-center gap-1">↑ {trend}</p>}
       </div>
       <div className="p-3 bg-slate-50 rounded-xl text-[#4DA3FF]">
@@ -120,9 +121,6 @@ const GroupEditor: React.FC = () => {
       const groupToSave = form as GroupOffering;
       await DataService.upsertGroup(groupToSave);
       
-      // MERGE LOGIC: Update local state instead of replacing the entire list from server.
-      // This prevents "wiping" the list if fetchGroups behavior differs or if the DB 
-      // is transitioning from mock to real data.
       setGroups(prevGroups => {
         const existingIndex = prevGroups.findIndex(g => g.id === groupToSave.id);
         if (existingIndex >= 0) {
@@ -177,8 +175,8 @@ const GroupEditor: React.FC = () => {
 
   if (editingId) {
     return (
-      <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 animate-in fade-in slide-in-from-bottom-4">
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+      <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 animate-in fade-in slide-in-from-bottom-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-4 border-b border-slate-100 gap-4">
           <div>
             <h3 className="text-xl font-bold text-slate-900">{editingId === 'new' ? 'Create New Group' : 'Edit Group Details'}</h3>
             <p className="text-slate-400 text-sm">Configure the public facing details for this cohort.</p>
@@ -187,14 +185,14 @@ const GroupEditor: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-2">
-            <div className="flex gap-4">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-grow">
                  <InputGroup label="Group Title">
                    <ModernInput value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="e.g. Navigating Transitions" />
                  </InputGroup>
               </div>
-              <div className="w-48">
+              <div className="w-full md:w-48">
                  <InputGroup label="Status">
                     <select 
                       className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#4DA3FF]/50 focus:border-[#4DA3FF] block p-3 transition-all outline-none"
@@ -208,7 +206,7 @@ const GroupEditor: React.FC = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <InputGroup label="Focus Area">
                   <ModernInput value={form.focus} onChange={e => setForm({...form, focus: e.target.value})} placeholder="e.g. Burnout" />
                </InputGroup>
@@ -275,12 +273,12 @@ const GroupEditor: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
            <h3 className="text-lg font-bold text-slate-900">Active Groups</h3>
            <p className="text-slate-500 text-sm">Manage your current offerings and cohorts.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3 w-full md:w-auto">
           <SecondaryButton onClick={restoreDefaults} disabled={restoring}>
             <RefreshCw className={`h-4 w-4 ${restoring ? 'animate-spin' : ''}`} />
             {restoring ? 'Restoring...' : 'Restore Defaults'}
@@ -289,15 +287,15 @@ const GroupEditor: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {groups.map(group => (
           <div 
             key={group.id} 
             onClick={() => startEdit(group)}
             className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-[#4DA3FF] transition-all group-card relative overflow-hidden cursor-pointer"
           >
-            <div className="flex gap-5">
-              <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-slate-100 relative">
+            <div className="flex flex-col sm:flex-row gap-5">
+              <div className="w-full sm:w-20 h-32 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-slate-100 relative">
                 <img src={group.image} className={`w-full h-full object-cover ${!group.active && 'grayscale opacity-70'}`} alt="" />
                 {!group.active && (
                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -306,8 +304,8 @@ const GroupEditor: React.FC = () => {
                 )}
               </div>
               <div className="flex-grow">
-                <div className="flex justify-between items-start">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2 inline-block ${group.active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider inline-block ${group.active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                     {group.active ? 'Active' : 'Draft'}
                   </span>
                   <div className="flex gap-1">
@@ -328,7 +326,7 @@ const GroupEditor: React.FC = () => {
                   </div>
                 </div>
                 <h4 className="font-bold text-slate-900 leading-tight">{group.title}</h4>
-                <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                <div className="text-xs text-slate-500 mt-2 flex items-center gap-2">
                    <Calendar className="h-3 w-3" /> {group.schedule}
                 </div>
               </div>
@@ -367,12 +365,12 @@ const BlogEditor: React.FC = () => {
       setForm({
         id: crypto.randomUUID(),
         title: '',
-        author: 'Reflective Sessions Team', // View model only (not saved)
-        publishDate: new Date().toLocaleDateString(), // View model only
-        imageUrl: 'https://images.unsplash.com/photo-1499750310159-52f8f4347504?auto=format&fit=crop&q=80', // View model only
-        excerpt: '', // View model only
+        author: 'Reflective Sessions Team',
+        publishDate: new Date().toLocaleDateString(),
+        imageUrl: 'https://images.unsplash.com/photo-1499750310159-52f8f4347504?auto=format&fit=crop&q=80',
+        excerpt: '',
         content: '',
-        tags: [] // View model only
+        tags: []
       });
     }
   };
@@ -404,8 +402,8 @@ const BlogEditor: React.FC = () => {
 
   if (editingId) {
     return (
-      <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+      <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-4 border-b border-slate-100 gap-4">
            <div>
              <h3 className="text-xl font-bold text-slate-900">Article Editor</h3>
              <p className="text-slate-400 text-sm">Write thoughts, updates, and psychoeducational content.</p>
@@ -422,12 +420,11 @@ const BlogEditor: React.FC = () => {
              <ModernTextArea value={form.content} onChange={e => setForm({...form, content: e.target.value})} style={{ minHeight: '400px', fontFamily: 'monospace'}} />
           </InputGroup>
 
-          {/* Note: Removed inputs for Author, Date, Image, Excerpt, Tags as they are not supported by the current database schema. */}
           <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-400">
              Note: Author, Image, and Date are managed automatically or using defaults to ensure database compatibility.
           </div>
 
-          <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
+          <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row justify-end gap-3">
              <SecondaryButton onClick={() => setEditingId(null)}>Discard</SecondaryButton>
              <PrimaryButton onClick={savePost} disabled={saving} icon={<Save className="h-4 w-4" />}>
                {saving ? 'Saving...' : 'Publish Article'}
@@ -442,7 +439,7 @@ const BlogEditor: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
            <h3 className="text-lg font-bold text-slate-900">Blog Posts</h3>
            <p className="text-slate-500 text-sm">Manage your publication feed.</p>
@@ -453,21 +450,21 @@ const BlogEditor: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
          {posts.length === 0 && <div className="p-6 text-center text-slate-400">No posts found. Create one!</div>}
          {posts.map((post, idx) => (
-           <div key={post.id} className={`p-5 flex items-center justify-between hover:bg-slate-50 transition-colors ${idx !== posts.length -1 ? 'border-b border-slate-50' : ''}`}>
-              <div className="flex items-center gap-4">
+           <div key={post.id} className={`p-5 flex flex-col sm:flex-row items-center justify-between hover:bg-slate-50 transition-colors gap-4 ${idx !== posts.length -1 ? 'border-b border-slate-50' : ''}`}>
+              <div className="flex items-center gap-4 w-full sm:w-auto">
                  <div className="h-12 w-12 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                     <img src={post.imageUrl} className="w-full h-full object-cover" alt="" />
                  </div>
-                 <div>
-                    <h4 className="font-bold text-slate-900">{post.title}</h4>
+                 <div className="min-w-0 flex-grow">
+                    <h4 className="font-bold text-slate-900 truncate">{post.title}</h4>
                     <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                        <span>{post.publishDate}</span>
-                       <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                       <span>{post.author}</span>
+                       <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300"></span>
+                       <span className="hidden sm:inline">{post.author}</span>
                     </div>
                  </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                  <button onClick={() => startEdit(post)} className="text-sm font-medium text-slate-500 hover:text-[#4DA3FF] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">Edit</button>
                  <button onClick={() => deletePost(post.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
               </div>
@@ -508,7 +505,7 @@ const ContentCMS: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
            <h3 className="text-lg font-bold text-slate-900">Content Management</h3>
            <p className="text-slate-500 text-sm">Update global site settings and text.</p>
@@ -532,7 +529,7 @@ const ContentCMS: React.FC = () => {
              <InputGroup label="Organization Logo URL">
                 <ModernInput value={content.logoUrl || ''} onChange={e => setContent({...content, logoUrl: e.target.value})} />
              </InputGroup>
-             <div className="hidden md:block"></div> {/* Spacer */}
+             <div className="hidden md:block"></div>
              <InputGroup label="Contact Email">
                  <ModernInput value={content.contactEmail} onChange={e => setContent({...content, contactEmail: e.target.value})} />
               </InputGroup>
@@ -586,8 +583,8 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'groups' | 'blog' | 'cms'>('dashboard');
   const [stats, setStats] = useState({ groups: 0, posts: 0 });
   const [user, setUser] = useState<any>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // New state for refresh functionality
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshSuccess, setRefreshSuccess] = useState(false);
@@ -595,7 +592,6 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only fetch user for display, RequireAdmin handles the guard
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser(session.user);
@@ -606,13 +602,10 @@ export const AdminDashboard: React.FC = () => {
       if (session) {
         setUser(session.user);
       } else {
-        // If session is lost (logged out), AdminDashboard should probably exit, 
-        // though RequireAdmin will eventually catch it.
         navigate('/admin/login', { replace: true });
       }
     });
 
-    // Basic stats fetch
     Promise.all([DataService.getGroups(), DataService.getBlogPosts()]).then(([g, p]) => {
       setStats({
         groups: g.filter(i => i.active).length,
@@ -632,17 +625,14 @@ export const AdminDashboard: React.FC = () => {
     setIsRefreshing(true);
     setRefreshSuccess(false);
     try {
-      // Re-fetch stats
       const [g, p] = await Promise.all([DataService.getGroups(), DataService.getBlogPosts()]);
       setStats({
         groups: g.filter(i => i.active).length,
         posts: p.length
       });
       
-      // Force remount of active tab content to fetch fresh data
       setRefreshKey(prev => prev + 1);
       
-      // Show success message
       setRefreshSuccess(true);
       setTimeout(() => setRefreshSuccess(false), 2000);
     } catch (e) {
@@ -661,7 +651,10 @@ export const AdminDashboard: React.FC = () => {
     onClick: () => void 
   }> = ({ label, icon, active, onClick }) => (
     <button 
-      onClick={onClick}
+      onClick={() => {
+        onClick();
+        setSidebarOpen(false);
+      }}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
         active 
           ? 'bg-white text-slate-900 shadow-sm font-semibold' 
@@ -682,17 +675,31 @@ export const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50/80 flex font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 overflow-x-hidden">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar */}
-      <aside className="w-72 bg-slate-100/50 backdrop-blur-xl border-r border-slate-200 flex flex-col fixed h-full z-10">
-        <div className="p-8">
-          <div className="flex items-center gap-3 mb-1">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 bg-slate-100 border-r border-slate-200 flex flex-col transform transition-transform duration-300
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 lg:static lg:h-screen lg:flex-shrink-0
+      `}>
+        <div className="p-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
              <div className="h-8 w-8 bg-gradient-to-br from-[#4DA3FF] to-[#A855F7] rounded-lg flex items-center justify-center text-white">
                 <Shield className="h-4 w-4" />
              </div>
-             <h2 className="text-lg font-bold tracking-tight text-slate-900">Reflective<br/>Sessions</h2>
+             <h2 className="text-lg font-bold tracking-tight text-slate-900">Reflective Sessions</h2>
           </div>
-          <p className="text-xs font-semibold text-slate-400 pl-11">Admin Console</p>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-600">
+            <X className="h-6 w-6" />
+          </button>
         </div>
 
         <nav className="flex-grow space-y-2 px-4">
@@ -750,16 +757,24 @@ export const AdminDashboard: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="ml-72 flex-grow p-10 min-w-0">
-        <header className="mb-10 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 capitalize tracking-tight">
-              {activeTab === 'cms' ? 'Content Management' : activeTab === 'blog' ? 'Blog Management' : activeTab}
-            </h1>
-            <p className="text-slate-500 mt-1">Overview of your platform's performance.</p>
+      <main className="flex-grow p-4 md:p-10 min-w-0 transition-all duration-300">
+        <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-white rounded-lg transition-colors"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 capitalize tracking-tight">
+                {activeTab === 'cms' ? 'Content Management' : activeTab === 'blog' ? 'Blog Management' : activeTab}
+              </h1>
+              <p className="text-slate-500 mt-1 text-sm">Manage your platform's core content.</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-             {/* Refresh Button */}
+          
+          <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
              <button 
                onClick={handleRefreshData}
                disabled={isRefreshing}
@@ -770,33 +785,35 @@ export const AdminDashboard: React.FC = () => {
                }`}
              >
                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-               {isRefreshing ? 'Loading...' : refreshSuccess ? 'Refreshed' : 'Refresh Data'}
+               <span className="hidden sm:inline">{isRefreshing ? 'Loading...' : refreshSuccess ? 'Refreshed' : 'Refresh Data'}</span>
              </button>
 
-             <div className="hidden md:block text-right">
-                <div className="text-sm font-bold text-slate-900">Admin User</div>
-                <div className="text-xs text-slate-500">{user?.email}</div>
+             <div className="flex items-center gap-3">
+               <div className="text-right hidden sm:block">
+                  <div className="text-sm font-bold text-slate-900 truncate max-w-[120px]">Admin</div>
+                  <div className="text-[10px] text-slate-500 truncate max-w-[120px]">{user?.email}</div>
+               </div>
+               <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-500 font-bold overflow-hidden">
+                 {user?.email ? user.email[0].toUpperCase() : 'A'}
+               </div>
              </div>
-            <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-500 font-bold overflow-hidden">
-               {user?.email ? user.email[0].toUpperCase() : 'A'}
-            </div>
           </div>
         </header>
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {activeTab === 'dashboard' && (
             <div key={refreshKey} className="space-y-8">
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatsCard title="Active Groups" value={stats.groups} icon={<Users className="h-6 w-6" />} trend="Current" />
                 <StatsCard title="Published Posts" value={stats.posts} icon={<BookOpen className="h-6 w-6" />} trend="Total" />
                 <StatsCard title="Total Views" value="--" icon={<BarChart3 className="h-6 w-6" />} trend="--" />
               </div>
               
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-3xl text-white shadow-xl shadow-slate-300/50 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 md:p-8 rounded-3xl text-white shadow-xl shadow-slate-300/50 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                   <div className="relative z-10">
-                    <h3 className="text-2xl font-bold mb-2">Inquiry Management</h3>
-                    <p className="text-slate-300 max-w-lg leading-relaxed">
+                    <h3 className="text-xl md:text-2xl font-bold mb-2">Inquiry Management</h3>
+                    <p className="text-slate-300 max-w-lg leading-relaxed text-sm md:text-base">
                       All participant inquiries are currently routed through the Google Forms integration. 
                       Please access the Master Sheet to review and approve new applicants.
                     </p>
@@ -805,7 +822,7 @@ export const AdminDashboard: React.FC = () => {
                     href="https://docs.google.com/spreadsheets/u/0/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="relative z-10 px-6 py-3 bg-white text-slate-900 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-colors shadow-lg"
+                    className="relative z-10 w-full md:w-auto px-6 py-3 bg-white text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors shadow-lg"
                   >
                     Open Master Sheet <ExternalLink className="h-4 w-4" />
                   </a>
