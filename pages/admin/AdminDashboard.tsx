@@ -291,7 +291,11 @@ const GroupEditor: React.FC = () => {
 
       <div className="grid md:grid-cols-2 gap-5">
         {groups.map(group => (
-          <div key={group.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group-card relative overflow-hidden">
+          <div 
+            key={group.id} 
+            onClick={() => startEdit(group)}
+            className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-[#4DA3FF] transition-all group-card relative overflow-hidden cursor-pointer"
+          >
             <div className="flex gap-5">
               <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-slate-100 relative">
                 <img src={group.image} className={`w-full h-full object-cover ${!group.active && 'grayscale opacity-70'}`} alt="" />
@@ -306,9 +310,21 @@ const GroupEditor: React.FC = () => {
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2 inline-block ${group.active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                     {group.active ? 'Active' : 'Draft'}
                   </span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <button onClick={() => startEdit(group)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-[#4DA3FF] transition-colors"><Edit2 className="h-4 w-4" /></button>
-                     <button onClick={() => deleteGroup(group.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="h-4 w-4" /></button>
+                  <div className="flex gap-1">
+                     <button 
+                        onClick={(e) => { e.stopPropagation(); startEdit(group); }} 
+                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-[#4DA3FF] transition-colors"
+                        title="Edit Group"
+                     >
+                        <Edit2 className="h-4 w-4" />
+                     </button>
+                     <button 
+                        onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }} 
+                        className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                        title="Delete Group"
+                     >
+                        <Trash2 className="h-4 w-4" />
+                     </button>
                   </div>
                 </div>
                 <h4 className="font-bold text-slate-900 leading-tight">{group.title}</h4>
